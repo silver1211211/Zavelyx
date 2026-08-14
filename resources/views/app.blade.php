@@ -8,7 +8,7 @@
             // Apply the saved theme before CSS and Vue load to prevent a flash of
             // the opposite palette and keep every page on one shared preference.
             (() => {
-                let theme = 'dark';
+                let theme = 'light';
                 try {
                     const saved = localStorage.getItem('nexahub-theme');
                     if (saved === 'light' || saved === 'dark') theme = saved;

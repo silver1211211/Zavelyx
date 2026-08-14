@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'nexahub-theme';
 
-export function getStoredTheme(fallback = 'dark') {
+export function getStoredTheme(fallback = 'light') {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored === 'light' || stored === 'dark') return stored;
@@ -10,9 +10,7 @@ export function getStoredTheme(fallback = 'dark') {
 }
 
 export function getPreferredTheme() {
-    return getStoredTheme(
-        window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
-    );
+    return getStoredTheme('light');
 }
 
 export function setThemeInstant(theme, persist = true) {
