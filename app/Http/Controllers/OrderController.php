@@ -129,15 +129,20 @@ class OrderController extends Controller
     public function loadServices(Request $request): JsonResponse
     {
         $platform = strtolower(trim((string) $request->string('platform', '')));
+        $search = mb_strtolower(trim((string) $request->string('q', '')));
 
         if ($platform === '') {
             return response()->json([]);
         }
 
+        if (mb_strlen($search) > 100) {
+            $search = mb_substr($search, 0, 100);
+        }
+
         $services = Cache::remember(
-            "order.svcs.{$platform}",
+            'order.svcs.'.sha1($platform.'|'.$search),
             300,
-            function () use ($platform) {
+            function () use ($platform, $search) {
                 $query = Service::available()
                     ->where('services.type', 'smm')
                     ->with('category:id,name,slug')
@@ -167,6 +172,27 @@ class OrderController extends Controller
                               );
                         }
                     });
+                }
+
+                if ($search !== '') {
+                    $terms = array_values(array_filter(
+                        preg_split('/\s+/u', $search) ?: [],
+                        fn (string $term): bool => $term !== ''
+                    ));
+
+                    foreach ($terms as $term) {
+                        $like = '%'.addcslashes($term, '%_\\').'%';
+                        $query->where(function (Builder $q) use ($like, $term): void {
+                            $q->whereRaw("LOWER(services.name) LIKE ? ESCAPE '\\\\'", [$like])
+                              ->orWhereHas('category', fn (Builder $cat) =>
+                                  $cat->whereRaw("LOWER(name) LIKE ? ESCAPE '\\\\'", [$like])
+                              );
+
+                            if (ctype_digit($term)) {
+                                $q->orWhere('services.id', (int) $term);
+                            }
+                        });
+                    }
                 }
 
                 return $query

@@ -127,6 +127,7 @@ const activeServices  = ref([]);
 const loadingServices = ref(false);
 const loadError       = ref(null);
 const platformCache   = new Map();
+let serviceRequestId  = 0;
 
 // ── Debounce utility ──────────────────────────────────────────────────────────
 function debounce(fn, ms = 250) {
@@ -171,10 +172,15 @@ function autoSelectFirst() {
 }
 
 async function loadPlatformServices(platform) {
+    const requestId = ++serviceRequestId;
     loadError.value      = null;
     activeServices.value = [];
-    if (!platform) return;
+    if (!platform) {
+        loadingServices.value = false;
+        return;
+    }
     if (platformCache.has(platform)) {
+        loadingServices.value = false;
         activeServices.value = platformCache.get(platform);
         autoSelectFirst();
         return;
@@ -189,13 +195,47 @@ async function loadPlatformServices(platform) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!Array.isArray(data)) throw new Error('Unexpected response');
+        if (requestId !== serviceRequestId) return;
         platformCache.set(platform, data);
         activeServices.value = data;
         autoSelectFirst();
     } catch {
+        if (requestId !== serviceRequestId) return;
         loadError.value = 'Could not load services. Please try again.';
     } finally {
-        loadingServices.value = false;
+        if (requestId === serviceRequestId) loadingServices.value = false;
+    }
+}
+
+async function searchServices(query) {
+    if (!activePlatform.value) return;
+
+    if (!query) {
+        await loadPlatformServices(activePlatform.value);
+        return;
+    }
+
+    const requestId = ++serviceRequestId;
+    loadingServices.value = true;
+    loadError.value = null;
+    try {
+        const params = new URLSearchParams({ platform: activePlatform.value, q: query });
+        const res = await fetchTimeout(
+            `/orders/services?${params.toString()}`,
+            { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } },
+            12000
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error('Unexpected response');
+        if (requestId !== serviceRequestId) return;
+        activeServices.value = data;
+        autoSelectFirst();
+    } catch {
+        if (requestId !== serviceRequestId) return;
+        loadError.value = 'Could not search services. Please try again.';
+    } finally {
+        if (requestId === serviceRequestId) loadingServices.value = false;
     }
 }
 
@@ -238,18 +278,7 @@ function selectService(svc) {
 watch(normalizedSearch, (q) => {
     catOpen.value = false;
     svcOpen.value = false;
-
-    const { category, service } = resolveSelection({
-        services: activeServices.value,
-        query: q,
-        currentCategoryId: activeCat.value?.id ?? null,
-        currentServiceId: selected.value?.id ?? null,
-    });
-
-    activeCat.value = category;
-    selected.value  = service;
-    form.service_id = service?.id ?? null;
-    if (service) form.quantity = parseInt(service.min_amount ?? 100, 10);
+    searchServices(q);
 });
 
 watch(activePlatform, (platform) => {

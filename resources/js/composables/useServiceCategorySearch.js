@@ -8,10 +8,12 @@ export function normalizeQuery(raw) {
 }
 
 export function serviceMatchesQuery(service, query) {
-    if (!query) return true;
+    const normalized = normalizeQuery(query);
+    if (!normalized) return true;
     const name = String(service?.name ?? '').toLowerCase();
     const categoryName = String(service?.category?.name ?? '').toLowerCase();
-    return name.includes(query) || categoryName.includes(query);
+    const searchableText = `${name} ${categoryName}`;
+    return normalized.split(/\s+/).every(term => searchableText.includes(term));
 }
 
 // Categories present among `services`, restricted to those with at least
