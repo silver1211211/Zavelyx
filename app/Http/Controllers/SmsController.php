@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NumberOrder;
+use App\Models\NumberProvider;
 use App\Models\Service;
 use App\Models\SmsMessage;
 use App\Models\Transaction;
@@ -88,25 +89,50 @@ class SmsController extends Controller
     {
         try {
             $cacheVersion = Cache::get('nexahub_sms_v', 0);
-            $services = Cache::remember("sms_services_local_{$cacheVersion}", 1800, function () {
-                return Service::query()
+            $services = Cache::remember("sms_services_local_v2_{$cacheVersion}", 1800, function () {
+                $fiveSimId = "COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.service')), ''), SUBSTRING_INDEX(provider_service_code, ':', -1))";
+
+                $fiveSim = Service::query()
                     ->where('type', 'sms')
                     ->where('is_active', true)
-                    ->orderBy('id')
-                    ->limit(500)
-                    ->get(['id', 'name', 'provider_service_code', 'selling_price', 'max_amount', 'metadata'])
+                    ->where('number_provider_driver', 'fivesim')
+                    ->selectRaw("{$fiveSimId} as service_id")
+                    ->selectRaw('MIN(name) as label')
+                    ->selectRaw('SUM(sms_available_count) as qty')
+                    ->selectRaw('MIN(selling_price) as price')
+                    ->groupByRaw($fiveSimId)
+                    ->get()
+                    ->map(fn ($row) => [
+                        'id'       => (string) $row->service_id,
+                        'label'    => (string) $row->label,
+                        'category' => '5SIM',
+                        'qty'      => (int) $row->qty,
+                        'price'    => (float) $row->price,
+                    ]);
+
+                $otherProviders = Service::query()
+                    ->where('type', 'sms')
+                    ->where('is_active', true)
+                    ->where('number_provider_driver', '!=', 'fivesim')
+                    ->orderBy('name')
+                    ->get(['id', 'name', 'provider_service_code', 'selling_price', 'max_amount', 'metadata', 'sms_available_count', 'number_provider_driver'])
                     ->map(function (Service $service) {
                         $metadata = is_array($service->metadata) ? $service->metadata : [];
-                        $qty = (int) ($metadata['available_count'] ?? $service->max_amount ?? 0);
+                        $qty = (int) ($service->sms_available_count ?: ($metadata['available_count'] ?? $service->max_amount ?? 0));
 
                         return [
                             'id'       => (string) ($service->provider_service_code ?: $service->id),
                             'label'    => $service->name,
-                            'category' => (string) ($metadata['number_provider_driver'] ?? 'Activation'),
+                            'category' => (string) ($service->number_provider_driver ?: ($metadata['number_provider_driver'] ?? 'Activation')),
                             'qty'      => $qty,
                             'price'    => (float) $service->selling_price,
                         ];
-                    })
+                    });
+
+                return $fiveSim
+                    ->concat($otherProviders)
+                    ->filter(fn (array $service) => $service['id'] !== '' && $service['qty'] > 0)
+                    ->unique('id')
                     ->values()
                     ->all();
             });
@@ -222,7 +248,7 @@ class SmsController extends Controller
 
         try {
             $cacheVersion = Cache::get('nexahub_sms_v', 0);
-            $cacheKey = "sms_country_stock_local_{$service}_{$cacheVersion}";
+            $cacheKey = "sms_country_stock_local_v4_{$service}_{$cacheVersion}";
             $cached = Cache::get($cacheKey);
             if ($cached !== null) {
                 return response()->json($cached);
@@ -231,10 +257,57 @@ class SmsController extends Controller
             $list = [];
             $rows = $this->localServiceQuery($service)
                 ->orderBy('selling_price')
-                ->limit(250)
                 ->get(['id', 'name', 'selling_price', 'cost_price', 'max_amount', 'metadata', 'sms_country', 'sms_country_name', 'sms_operator', 'sms_available_count']);
 
-            foreach ($rows as $row) {
+            if ($rows->isNotEmpty()) {
+                $providerId = $rows
+                    ->map(fn (Service $row) => is_array($row->metadata) ? ($row->metadata['number_provider_id'] ?? null) : null)
+                    ->filter()
+                    ->first();
+                $numberProvider = $providerId ? NumberProvider::whereKey($providerId)->where('is_active', true)->first() : null;
+
+                if ($numberProvider) {
+                    try {
+                        $providerDriver = $this->providerService->driver($numberProvider);
+                        $livePrices = $providerDriver->getPrices($service);
+                        $countryMetadata = $providerDriver->getCountries();
+                        foreach ($livePrices as $country => $operators) {
+                            if (!is_array($operators)) continue;
+                            foreach ($operators as $operator => $info) {
+                                if (!is_array($info)) continue;
+                                $qty = (int) ($info['count'] ?? 0);
+                                $cost = (float) ($info['cost'] ?? 0);
+                                if ($qty <= 0 || $cost <= 0) continue;
+
+                                $price = $numberProvider->applyMarkup($cost);
+                                if (!isset($list[$country])) {
+                                    $countryInfo = is_array($countryMetadata[$country] ?? null) ? $countryMetadata[$country] : [];
+                                    $list[$country] = [
+                                        'code' => (string) $country,
+                                        'name' => (string) ($countryInfo['text_en'] ?? Str::of((string) $country)->replace(['_', '-'], ' ')->title()),
+                                        'qty' => 0,
+                                        'cost' => $cost,
+                                        'price' => $price,
+                                        'operators' => [],
+                                    ];
+                                }
+                                $list[$country]['qty'] += $qty;
+                                $list[$country]['operators'][] = [
+                                    'name' => (string) $operator,
+                                    'count' => $qty,
+                                    'cost' => $cost,
+                                    'price' => $price,
+                                    'rate' => (float) ($info['rate'] ?? 0),
+                                ];
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        Log::warning("SMS live country stock failed ({$numberProvider->name}/{$service}): {$e->getMessage()}");
+                    }
+                }
+            }
+
+            foreach ($list === [] ? $rows : [] as $row) {
                 $metadata = is_array($row->metadata) ? $row->metadata : [];
                 $country = trim((string) ($row->sms_country ?: ($metadata['country'] ?? 'any'))) ?: 'any';
                 $qty = (int) ($row->sms_available_count ?: ($metadata['available_count'] ?? $row->max_amount ?? 0));
@@ -273,7 +346,9 @@ class SmsController extends Controller
 
             $list = array_values($list);
             usort($list, fn ($a, $b) => $b['qty'] <=> $a['qty']);
-            Cache::put($cacheKey, $list, 1800);
+            if ($list !== []) {
+                Cache::put($cacheKey, $list, 1800);
+            }
 
             return response()->json($list);
         } catch (\Throwable $e) {
@@ -587,7 +662,13 @@ class SmsController extends Controller
         return Service::query()
             ->where('type', 'sms')
             ->where('is_active', true)
-            ->where('provider_service_code', $needle);
+            ->where(function ($query) use ($needle): void {
+                $query->where('provider_service_code', $needle)
+                    ->orWhere(function ($query) use ($needle): void {
+                        $query->where('number_provider_driver', 'fivesim')
+                            ->where('metadata->service', $needle);
+                    });
+            });
     }
 
     private function localCountryRows(): array

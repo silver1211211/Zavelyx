@@ -180,7 +180,7 @@ class FiveSimService implements NumberProviderContract
     public function getPrices(string $product): array
     {
         $product = $this->decodeProduct($product);
-        $cacheKey = '5sim_prices_' . md5($product) . '_' . $this->cv();
+        $cacheKey = '5sim_prices_v2_' . md5($product) . '_' . $this->cv();
         $cached = Cache::get($cacheKey);
         if ($cached !== null) {
             return $cached;
@@ -350,6 +350,10 @@ class FiveSimService implements NumberProviderContract
     private function normalizeProductPrices(array $data, string $product): array
     {
         $out = [];
+
+        if (count($data) === 1 && isset($data[$product]) && is_array($data[$product])) {
+            $data = $data[$product];
+        }
 
         foreach ($data as $country => $value) {
             if (!is_array($value)) {
