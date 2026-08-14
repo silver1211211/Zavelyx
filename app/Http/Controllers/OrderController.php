@@ -22,6 +22,8 @@ class OrderController extends Controller
         'tiktok', 'youtube', 'telegram', 'spotify', 'crypto', 'google',
         'instagram', 'facebook', 'twitter', 'twitch', 'website', 'linkedin',
         'soundcloud', 'traffic', 'threads', 'discord', 'seo', 'reddit', 'pinterest',
+        'whatsapp', 'kwai', 'kick', 'rutube', 'rednote', 'jaco', 'quora',
+        'coinmarketcap', 'other',
     ];
 
     public function index(Request $request): Response
@@ -101,11 +103,17 @@ class OrderController extends Controller
             $totals = array_fill_keys(self::PLATFORM_KEYS, 0);
             foreach ($rows as $row) {
                 $haystack = strtolower((string) $row->category_name . ' ' . (string) $row->service_name);
+                $normalized = preg_replace('/[^a-z0-9]+/', '', $haystack);
+                $matched = false;
                 foreach (self::PLATFORM_KEYS as $key) {
-                    if (str_contains($haystack, $key)) {
+                    if ($key !== 'other' && (str_contains($haystack, $key) || str_contains($normalized, $key))) {
                         $totals[$key]++;
+                        $matched = true;
                         break;
                     }
+                }
+                if (! $matched) {
+                    $totals['other']++;
                 }
             }
 
@@ -136,12 +144,28 @@ class OrderController extends Controller
                     ->orderBy('category_id')
                     ->orderBy('selling_price');
 
-                if ($platform !== 'all') {
-                    $query->where(function (Builder $q) use ($platform): void {
-                        $q->whereRaw('LOWER(services.name) LIKE ?', ["%{$platform}%"])
-                          ->orWhereHas('category', fn (Builder $cat) =>
-                              $cat->whereRaw('LOWER(name) LIKE ?', ["%{$platform}%"])
-                          );
+                if ($platform === 'other') {
+                    $known = array_values(array_filter(self::PLATFORM_KEYS, fn ($key) => $key !== 'other'));
+                    $query->where(function (Builder $q) use ($known): void {
+                        foreach ($known as $key) {
+                            $terms = $key === 'rednote' ? ['red note', 'xiaohongshu', 'rednote'] : [$key];
+                            foreach ($terms as $term) {
+                                $q->whereRaw('LOWER(services.name) NOT LIKE ?', ["%{$term}%"])
+                                  ->whereDoesntHave('category', fn (Builder $cat) =>
+                                      $cat->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
+                                  );
+                            }
+                        }
+                    });
+                } elseif ($platform !== 'all') {
+                    $terms = $platform === 'rednote' ? ['red note', 'xiaohongshu', 'rednote'] : [$platform];
+                    $query->where(function (Builder $q) use ($terms): void {
+                        foreach ($terms as $term) {
+                            $q->orWhereRaw('LOWER(services.name) LIKE ?', ["%{$term}%"])
+                              ->orWhereHas('category', fn (Builder $cat) =>
+                                  $cat->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
+                              );
+                        }
                     });
                 }
 

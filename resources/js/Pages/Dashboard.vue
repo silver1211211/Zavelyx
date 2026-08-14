@@ -86,6 +86,15 @@ const PLATFORM_MAP = [
     { key: 'seo',        label: 'SEO',         brand: '#34d399', from: '#065f46', to: '#059669', glow: '#34d399' },
     { key: 'reddit',     label: 'Reddit',      brand: '#ff4500', from: '#c2410c', to: '#f97316', glow: '#fb923c' },
     { key: 'pinterest',  label: 'Pinterest',   brand: '#e60023', from: '#9f1239', to: '#e11d48', glow: '#fb7185' },
+    { key: 'whatsapp',   label: 'WhatsApp',    brand: '#25d366', from: '#166534', to: '#16a34a', glow: '#4ade80' },
+    { key: 'kwai',       label: 'Kwai',        brand: '#ff6b00', from: '#c2410c', to: '#f97316', glow: '#fb923c' },
+    { key: 'kick',       label: 'Kick',        brand: '#53fc18', from: '#166534', to: '#22c55e', glow: '#4ade80' },
+    { key: 'rutube',     label: 'Rutube',      brand: '#e11d48', from: '#9f1239', to: '#e11d48', glow: '#fb7185' },
+    { key: 'rednote',    label: 'Red Note',    brand: '#ef4444', from: '#991b1b', to: '#ef4444', glow: '#f87171' },
+    { key: 'jaco',       label: 'Jaco',        brand: '#8b5cf6', from: '#5b21b6', to: '#8b5cf6', glow: '#a78bfa' },
+    { key: 'quora',      label: 'Quora',       brand: '#b92b27', from: '#7f1d1d', to: '#dc2626', glow: '#f87171' },
+    { key: 'coinmarketcap', label: 'CoinMarketCap', brand: '#3861fb', from: '#1d4ed8', to: '#4f46e5', glow: '#818cf8' },
+    { key: 'other',      label: 'Other',       brand: '#64748b', from: '#334155', to: '#475569', glow: '#94a3b8' },
 ];
 
 // Merge platform counts from backend with color info

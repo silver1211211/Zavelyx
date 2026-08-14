@@ -19,6 +19,8 @@ class SmmProviderService
         'instagram', 'facebook', 'twitter', 'x', 'twitch', 'website',
         'linkedin', 'soundcloud', 'traffic', 'threads', 'discord', 'seo',
         'reddit', 'pinterest',
+        'whatsapp', 'kwai', 'kick', 'rutube', 'rednote', 'jaco', 'quora',
+        'coinmarketcap', 'other',
     ];
 
     // ── Connection & balance ──────────────────────────────────────────────────
@@ -486,12 +488,13 @@ class SmmProviderService
         $haystack = strtolower($category . ' ' . $name);
 
         foreach (self::PLATFORM_KEYS as $key) {
-            if (str_contains($haystack, $key)) {
+            $normalized = preg_replace('/[^a-z0-9]+/', '', $haystack);
+            if ($key !== 'other' && (str_contains($haystack, $key) || str_contains($normalized, $key))) {
                 return $key === 'x' ? 'twitter' : $key;
             }
         }
 
-        return null;
+        return 'other';
     }
 
     private function applyMarkup(float $cost, string $type, float $value): float

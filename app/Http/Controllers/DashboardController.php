@@ -18,6 +18,8 @@ class DashboardController extends Controller
         'tiktok', 'youtube', 'telegram', 'spotify', 'crypto', 'google',
         'instagram', 'facebook', 'twitter', 'twitch', 'website', 'linkedin',
         'soundcloud', 'traffic', 'threads', 'discord', 'seo', 'reddit', 'pinterest',
+        'whatsapp', 'kwai', 'kick', 'rutube', 'rednote', 'jaco', 'quora',
+        'coinmarketcap', 'other',
     ];
 
     public function __invoke(Request $request): Response
@@ -92,11 +94,17 @@ class DashboardController extends Controller
             $totals = array_fill_keys(self::PLATFORM_KEYS, 0);
             foreach ($rows as $row) {
                 $haystack = strtolower((string) $row->category_name . ' ' . (string) $row->service_name);
+                $normalized = preg_replace('/[^a-z0-9]+/', '', $haystack);
+                $matched = false;
                 foreach (self::PLATFORM_KEYS as $key) {
-                    if (str_contains($haystack, $key)) {
+                    if ($key !== 'other' && (str_contains($haystack, $key) || str_contains($normalized, $key))) {
                         $totals[$key]++;
+                        $matched = true;
                         break;
                     }
+                }
+                if (! $matched) {
+                    $totals['other']++;
                 }
             }
 
