@@ -250,7 +250,7 @@ const strengthTextColor = computed(() => {
                                 autofocus
                                 autocomplete="name"
                                 placeholder="Your full name"
-                                class="block w-full rounded-xl border border-slate-200 dark:border-white/12 bg-white dark:bg-[#0f1e30] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition focus:border-sky-400 dark:focus:border-sky-500 focus:ring-2 focus:ring-sky-400/20 dark:focus:ring-sky-500/25 outline-none"
+                                class="block w-full rounded-xl border border-slate-200 dark:border-white/12 bg-white dark:bg-[#0f1e30] px-4 py-3 text-base sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition focus:border-sky-400 dark:focus:border-sky-500 focus:ring-2 focus:ring-sky-400/20 dark:focus:ring-sky-500/25 outline-none"
                             />
                             <InputError class="mt-1.5 text-xs text-red-600 dark:text-red-400" :message="form.errors.name" />
                         </div>
@@ -269,7 +269,7 @@ const strengthTextColor = computed(() => {
                                 required
                                 autocomplete="username"
                                 placeholder="you@example.com"
-                                class="block w-full rounded-xl border border-slate-200 dark:border-white/12 bg-white dark:bg-[#0f1e30] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition focus:border-sky-400 dark:focus:border-sky-500 focus:ring-2 focus:ring-sky-400/20 dark:focus:ring-sky-500/25 outline-none"
+                                class="block w-full rounded-xl border border-slate-200 dark:border-white/12 bg-white dark:bg-[#0f1e30] px-4 py-3 text-base sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition focus:border-sky-400 dark:focus:border-sky-500 focus:ring-2 focus:ring-sky-400/20 dark:focus:ring-sky-500/25 outline-none"
                             />
                             <InputError class="mt-1.5 text-xs text-red-600 dark:text-red-400" :message="form.errors.email" />
                         </div>
@@ -289,7 +289,7 @@ const strengthTextColor = computed(() => {
                                     required
                                     autocomplete="new-password"
                                     placeholder="Min. 8 characters"
-                                    class="block w-full rounded-xl border border-slate-200 dark:border-white/12 bg-white dark:bg-[#0f1e30] px-4 py-3 pr-12 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition focus:border-sky-400 dark:focus:border-sky-500 focus:ring-2 focus:ring-sky-400/20 dark:focus:ring-sky-500/20 outline-none"
+                                    class="block w-full rounded-xl border border-slate-200 dark:border-white/12 bg-white dark:bg-[#0f1e30] px-4 py-3 pr-12 text-base sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition focus:border-sky-400 dark:focus:border-sky-500 focus:ring-2 focus:ring-sky-400/20 dark:focus:ring-sky-500/20 outline-none"
                                 />
                                 <button
                                     type="button"
@@ -333,7 +333,7 @@ const strengthTextColor = computed(() => {
                                     required
                                     autocomplete="new-password"
                                     placeholder="Re-enter your password"
-                                    class="block w-full rounded-xl border border-slate-200 dark:border-white/12 bg-white dark:bg-[#0f1e30] px-4 py-3 pr-12 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition focus:border-sky-400 dark:focus:border-sky-500 focus:ring-2 focus:ring-sky-400/20 dark:focus:ring-sky-500/20 outline-none"
+                                    class="block w-full rounded-xl border border-slate-200 dark:border-white/12 bg-white dark:bg-[#0f1e30] px-4 py-3 pr-12 text-base sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition focus:border-sky-400 dark:focus:border-sky-500 focus:ring-2 focus:ring-sky-400/20 dark:focus:ring-sky-500/20 outline-none"
                                 />
                                 <button
                                     type="button"
