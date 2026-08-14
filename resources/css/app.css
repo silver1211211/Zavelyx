@@ -169,6 +169,16 @@
         background-color: var(--bg-page);
         @apply text-slate-900 antialiased dark:text-slate-100;
     }
+
+    /* Prevent iOS and other mobile browsers from zooming when a user focuses
+       controls across authenticated pages. Desktop typography is unchanged. */
+    @media (max-width: 639px) {
+        .user-app-shell input,
+        .user-app-shell select,
+        .user-app-shell textarea {
+            font-size: 16px !important;
+        }
+    }
 }
 
 @layer components {

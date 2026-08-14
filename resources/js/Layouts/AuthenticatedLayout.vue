@@ -260,7 +260,7 @@ const userLevel = computed(() => authUser.value?.account_level ?? 'basic');
 <template>
     <ToastNotifications />
 
-    <div class="min-h-screen">
+    <div class="user-app-shell min-h-screen">
 
         <!-- Mobile overlay -->
         <Transition enter-active-class="transition-opacity duration-250 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100"
