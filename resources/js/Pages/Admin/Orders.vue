@@ -32,7 +32,7 @@ function applyFilter(status = activeStatus.value) {
     router.get(route('admin.orders.index'), {
         search: searchQuery.value,
         status: status,
-    }, { preserveState: true, replace: true });
+    }, { preserveState: true, preserveScroll: true, replace: true });
 }
 
 // ── Status update modal ───────────────────────────────────────────────────────
@@ -344,14 +344,14 @@ const shortRef = (r) => r ? String(r).slice(0, 8).toUpperCase() : '—';
                         Showing {{ orders.from }}–{{ orders.to }} of {{ orders.total }}
                     </p>
                     <div class="flex items-center gap-1">
-                        <button v-if="orders.prev_page_url" @click="router.get(orders.prev_page_url, {}, { preserveState: true })"
+                        <button v-if="orders.prev_page_url" @click="router.get(orders.prev_page_url, {}, { preserveState: true, preserveScroll: true })"
                             class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-500 dark:text-slate-400 transition-colors">
                             <ChevronLeft class="w-4 h-4" />
                         </button>
                         <span class="px-3 py-1 text-[12px] font-semibold text-slate-700 dark:text-slate-300">
                             {{ orders.current_page }} / {{ orders.last_page }}
                         </span>
-                        <button v-if="orders.next_page_url" @click="router.get(orders.next_page_url, {}, { preserveState: true })"
+                        <button v-if="orders.next_page_url" @click="router.get(orders.next_page_url, {}, { preserveState: true, preserveScroll: true })"
                             class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] text-slate-500 dark:text-slate-400 transition-colors">
                             <ChevronRight class="w-4 h-4" />
                         </button>

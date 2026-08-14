@@ -1,17 +1,19 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { AlertCircle, Check, Grid3x3, Loader2, Pencil, Plus, Search, ShoppingCart, Trash2, X } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { AlertCircle, Check, ChevronLeft, ChevronRight, Grid3x3, Loader2, Pencil, Plus, Search, ShoppingCart, Trash2, X } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
 
 const props = defineProps({
     services:   { type: Object, default: () => ({ data: [] }) },
     categories: { type: Array, default: () => [] },
+    filters:    { type: Object, default: () => ({}) },
+    counts:     { type: Object, default: () => ({ all: 0, active: 0, inactive: 0, manual: 0, imported: 0 }) },
 });
 
 // ── UI state ──────────────────────────────────────────────────────────────
-const searchQuery   = ref('');
-const filterStatus  = ref('all');
+const searchQuery   = ref(props.filters.search ?? '');
+const filterStatus  = ref(props.filters.status ?? 'all');
 const showAddModal  = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
@@ -24,33 +26,31 @@ const allServices = computed(() =>
     Array.isArray(props.services) ? props.services : (props.services?.data ?? [])
 );
 
-const filteredServices = computed(() => {
-    let list = allServices.value;
+const filteredServices = computed(() => allServices.value);
 
-    if (filterStatus.value === 'active')   list = list.filter(s => s.is_active);
-    if (filterStatus.value === 'inactive') list = list.filter(s => !s.is_active);
-    if (filterStatus.value === 'manual')   list = list.filter(s => !s.provider_id);
-    if (filterStatus.value === 'imported') list = list.filter(s => !!s.provider_id);
+let searchTimer = null;
+function applyFilters() {
+    router.get(route('admin.services.index'), {
+        search: searchQuery.value || undefined,
+        status: filterStatus.value === 'all' ? undefined : filterStatus.value,
+    }, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        only: ['services', 'filters'],
+    });
+}
 
-    if (searchQuery.value) {
-        const q = searchQuery.value.toLowerCase();
-        list = list.filter(s =>
-            s.name?.toLowerCase().includes(q) ||
-            s.category?.name?.toLowerCase().includes(q) ||
-            s.provider?.name?.toLowerCase().includes(q)
-        );
-    }
-
-    return list;
+watch(searchQuery, () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(applyFilters, 450);
 });
 
-const counts = computed(() => ({
-    all:      allServices.value.length,
-    active:   allServices.value.filter(s => s.is_active).length,
-    inactive: allServices.value.filter(s => !s.is_active).length,
-    manual:   allServices.value.filter(s => !s.provider_id).length,
-    imported: allServices.value.filter(s => !!s.provider_id).length,
-}));
+function selectFilter(status) {
+    if (filterStatus.value === status) return;
+    filterStatus.value = status;
+    applyFilters();
+}
 
 // ── Add form ──────────────────────────────────────────────────────────────
 const addForm = useForm({
@@ -154,7 +154,7 @@ function fmt(val) {
             <div>
                 <p class="text-[11px] font-semibold uppercase tracking-widest text-sky-500 dark:text-sky-400 mb-0.5">Management</p>
                 <h1 class="text-xl font-black text-slate-900 dark:text-white">Services</h1>
-                <p class="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">{{ counts.all }} total · {{ counts.active }} active</p>
+                <p class="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">{{ counts.all.toLocaleString() }} total · {{ counts.active.toLocaleString() }} active</p>
             </div>
             <div class="flex items-center gap-2">
                 <button
@@ -193,7 +193,7 @@ function fmt(val) {
                         { key: 'imported', label: 'Imported', count: counts.imported },
                     ]"
                     :key="tab.key"
-                    @click="filterStatus = tab.key"
+                    @click="selectFilter(tab.key)"
                     :class="['flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold transition-all',
                         filterStatus === tab.key
                             ? 'bg-sky-500 text-white shadow-sm'
@@ -201,7 +201,7 @@ function fmt(val) {
                 >
                     {{ tab.label }}
                     <span :class="['text-[10px] px-1.5 py-0.5 rounded-full font-bold', filterStatus === tab.key ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400']">
-                        {{ tab.count }}
+                        {{ tab.count.toLocaleString() }}
                     </span>
                 </button>
             </div>
@@ -219,7 +219,7 @@ function fmt(val) {
         </div>
 
         <!-- Services table -->
-        <div class="bg-white dark:bg-[#0d1e35] rounded-2xl border border-slate-200 dark:border-sky-500/12 overflow-hidden">
+        <div class="min-h-[34rem] bg-white dark:bg-[#0d1e35] rounded-2xl border border-slate-200 dark:border-sky-500/12 overflow-hidden">
 
             <!-- Empty state -->
             <div v-if="filteredServices.length === 0" class="py-16 flex flex-col items-center gap-3 text-center px-6">
@@ -238,7 +238,7 @@ function fmt(val) {
             </div>
 
             <div v-else class="overflow-x-auto">
-                <table class="w-full text-[13px]">
+                <table class="w-full min-w-[900px] table-fixed text-[13px]">
                     <thead>
                         <tr class="border-b border-slate-100 dark:border-sky-500/8 bg-slate-50 dark:bg-white/2">
                             <th class="text-left px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-600">Service</th>
@@ -319,8 +319,20 @@ function fmt(val) {
 
                 <!-- Table footer -->
                 <div class="px-5 py-3 border-t border-slate-100 dark:border-sky-500/8 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-600">
-                    <span>Showing {{ filteredServices.length }} of {{ counts.all }} services</span>
+                    <span>Showing {{ services.from ?? 0 }}–{{ services.to ?? 0 }} of {{ services.total?.toLocaleString() ?? 0 }} services</span>
                     <span v-if="searchQuery || filterStatus !== 'all'" class="italic">Filtered view</span>
+                </div>
+
+                <div v-if="services.last_page > 1" class="px-4 sm:px-5 py-3 border-t border-slate-100 dark:border-sky-500/8 flex items-center justify-between gap-3">
+                    <Link :href="services.prev_page_url ?? '#'" preserve-state preserve-scroll
+                        :class="['inline-flex items-center gap-1 h-9 px-3 rounded-xl border text-[12px] font-semibold', services.prev_page_url ? 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300' : 'pointer-events-none opacity-40 border-slate-200 dark:border-white/10 text-slate-400']">
+                        <ChevronLeft class="w-4 h-4" /> Previous
+                    </Link>
+                    <span class="text-[11px] text-slate-500 whitespace-nowrap">Page {{ services.current_page }} of {{ services.last_page }}</span>
+                    <Link :href="services.next_page_url ?? '#'" preserve-state preserve-scroll
+                        :class="['inline-flex items-center gap-1 h-9 px-3 rounded-xl border text-[12px] font-semibold', services.next_page_url ? 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300' : 'pointer-events-none opacity-40 border-slate-200 dark:border-white/10 text-slate-400']">
+                        Next <ChevronRight class="w-4 h-4" />
+                    </Link>
                 </div>
             </div>
         </div>

@@ -20,7 +20,7 @@ let searchTimer = null;
 watch(searchQuery, (val) => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
-        router.get(route('admin.users.index'), { search: val }, { preserveState: true, replace: true });
+        router.get(route('admin.users.index'), { search: val }, { preserveState: true, preserveScroll: true, replace: true });
     }, 350);
 });
 

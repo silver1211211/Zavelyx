@@ -60,7 +60,7 @@ function applyFilters() {
         currency:  currency.value,
         date_from: dateFrom.value,
         date_to:   dateTo.value,
-    }, { preserveState: true, replace: true });
+    }, { preserveState: true, preserveScroll: true, replace: true });
 }
 
 function setStatus(s) {

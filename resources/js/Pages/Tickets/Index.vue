@@ -34,7 +34,7 @@ function applyFilters() {
     router.get(route('tickets.index'), {
         search: search.value || undefined,
         status: statusFilter.value || undefined,
-    }, { preserveState: true, replace: true });
+    }, { preserveState: true, preserveScroll: true, replace: true });
 }
 
 const form = useForm({

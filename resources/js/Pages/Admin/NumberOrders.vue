@@ -31,7 +31,7 @@ function applyFilters() {
         service:     serviceFlt.value  || undefined,
         date_from:   dateFrom.value    || undefined,
         date_to:     dateTo.value      || undefined,
-    }, { preserveState: true, replace: true });
+    }, { preserveState: true, preserveScroll: true, replace: true });
 }
 
 function setScope(s) {

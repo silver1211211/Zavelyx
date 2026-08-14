@@ -17,17 +17,51 @@ class ServiceController extends Controller
 {
     public function __construct(private SmmProviderService $smm) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $search = trim((string) $request->string('search'));
+        $status = (string) $request->string('status', 'all');
+        if (!in_array($status, ['all', 'active', 'inactive', 'manual', 'imported'], true)) {
+            $status = 'all';
+        }
+
         $services = Service::query()
             ->with(['category:id,name', 'provider:id,name'])
+            ->when($status === 'active', fn ($query) => $query->where('is_active', true))
+            ->when($status === 'inactive', fn ($query) => $query->where('is_active', false))
+            ->when($status === 'manual', fn ($query) => $query->whereNull('provider_id'))
+            ->when($status === 'imported', fn ($query) => $query->whereNotNull('provider_id'))
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('id', ctype_digit($search) ? (int) $search : 0)
+                        ->orWhereHas('category', fn ($category) => $category->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('provider', fn ($provider) => $provider->where('name', 'like', "%{$search}%"));
+                });
+            })
             ->latest()
-            ->paginate(200)
+            ->paginate(75)
             ->withQueryString();
+
+        $counts = Service::query()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(is_active = 1) as active_count')
+            ->selectRaw('SUM(is_active = 0) as inactive_count')
+            ->selectRaw('SUM(provider_id IS NULL) as manual_count')
+            ->selectRaw('SUM(provider_id IS NOT NULL) as imported_count')
+            ->first();
 
         return Inertia::render('Admin/Services', [
             'services'   => $services,
             'categories' => Category::orderBy('name')->get(['id', 'name', 'type']),
+            'filters'    => ['search' => $search, 'status' => $status],
+            'counts'     => [
+                'all'      => (int) ($counts->total ?? 0),
+                'active'   => (int) ($counts->active_count ?? 0),
+                'inactive' => (int) ($counts->inactive_count ?? 0),
+                'manual'   => (int) ($counts->manual_count ?? 0),
+                'imported' => (int) ($counts->imported_count ?? 0),
+            ],
         ]);
     }
 

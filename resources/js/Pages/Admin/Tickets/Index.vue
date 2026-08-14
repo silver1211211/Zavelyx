@@ -43,7 +43,7 @@ function applyFilters() {
         status:   status.value   || undefined,
         priority: priority.value || undefined,
         category: category.value || undefined,
-    }, { preserveState: true, replace: true });
+    }, { preserveState: true, preserveScroll: true, replace: true });
 }
 
 function clearFilters() {
