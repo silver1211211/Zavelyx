@@ -158,7 +158,7 @@ onMounted(() => {
                     </div>
                     <div>
                         <p class="text-[13px] font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
-                            {{ siteSettings.name || 'NexaHub' }}
+                            {{ siteSettings.name || 'Zavelyx' }}
                         </p>
                         <p class="text-[9px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-600 leading-tight">Admin Panel</p>
                     </div>
@@ -354,7 +354,7 @@ onMounted(() => {
                             >
                                 <div class="px-4 py-3 border-b border-slate-100 dark:border-sky-500/10">
                                     <p class="text-[12px] font-semibold text-slate-900 dark:text-white">Administrator</p>
-                                    <p class="text-[11px] text-slate-400 dark:text-slate-400 mt-0.5">admin@nexahub.io</p>
+                                    <p class="text-[11px] text-slate-400 dark:text-slate-400 mt-0.5">admin@zavelyx.com</p>
                                 </div>
                                 <div class="py-1">
                                     <button

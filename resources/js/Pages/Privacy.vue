@@ -7,7 +7,7 @@ import { computed, onMounted, ref } from 'vue';
 const isDark = ref(false);
 const themeIcon = computed(() => (isDark.value ? Sun : Moon));
 const activeSection = ref('');
-const supportLink = computed(() => usePage().props.contact_link || 'mailto:support@nexahub.io');
+const supportLink = computed(() => usePage().props.contact_link || 'mailto:support@zavelyx.com');
 
 function setTheme(theme) {
     const resolved = setThemeInstant(theme);
@@ -52,7 +52,7 @@ const sections = [
 </script>
 
 <template>
-    <Head title="Privacy Policy — NexaHub" />
+    <Head title="Privacy Policy — Zavelyx" />
 
     <div class="relative min-h-screen bg-white dark:bg-[#070d1a] text-slate-900 dark:text-white transition-colors duration-300">
 
@@ -132,7 +132,7 @@ const sections = [
                     <h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white sm:text-5xl">Privacy Policy</h1>
                     <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">Last updated: May 2026</p>
                     <p class="mt-3 text-base leading-8 text-slate-600 dark:text-slate-400">
-                        At NexaHub, your privacy is foundational to how we operate. This policy explains what data we collect, how we use it, and the rights you have over it across our virtual number, OTP activation, and SMS verification platform.
+                        At Zavelyx, your privacy is foundational to how we operate. This policy explains what data we collect, how we use it, and the rights you have over it across our virtual number, OTP activation, and SMS verification platform.
                     </p>
                 </div>
 
@@ -147,7 +147,7 @@ const sections = [
                             <h2 class="text-2xl font-black text-slate-900 dark:text-white">1. Data We Collect</h2>
                         </div>
                         <div class="space-y-4 text-slate-600 dark:text-slate-400 leading-8">
-                            <p>We collect the following categories of data to operate and improve the NexaHub platform:</p>
+                            <p>We collect the following categories of data to operate and improve the Zavelyx platform:</p>
 
                             <div class="space-y-3">
                                 <div class="rounded-2xl border border-slate-100 dark:border-sky-500/15 bg-slate-50 dark:bg-[#0d1e35] px-5 py-4">
@@ -181,12 +181,12 @@ const sections = [
                             <h2 class="text-2xl font-black text-slate-900 dark:text-white">2. SMS Message Data</h2>
                         </div>
                         <div class="space-y-4 text-slate-600 dark:text-slate-400 leading-8">
-                            <p>NexaHub's virtual number and Receive SMS services involve the delivery of SMS messages to your dashboard. Here is how we handle that message data:</p>
+                            <p>Zavelyx's virtual number and Receive SMS services involve the delivery of SMS messages to your dashboard. Here is how we handle that message data:</p>
 
                             <div class="space-y-3">
                                 <div class="rounded-2xl border border-slate-100 dark:border-sky-500/15 bg-slate-50 dark:bg-[#0d1e35] px-5 py-4">
                                     <p class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">OTP Content — Not Permanently Stored</p>
-                                    <p class="text-sm">OTP codes and verification messages delivered through NexaHub virtual numbers are displayed on your dashboard for the duration of the session only. OTP message content is permanently purged from our servers within <strong class="text-slate-800 dark:text-slate-200">24 hours</strong> of session completion. We do not index, analyze, or retain OTP codes beyond this window.</p>
+                                    <p class="text-sm">OTP codes and verification messages delivered through Zavelyx virtual numbers are displayed on your dashboard for the duration of the session only. OTP message content is permanently purged from our servers within <strong class="text-slate-800 dark:text-slate-200">24 hours</strong> of session completion. We do not index, analyze, or retain OTP codes beyond this window.</p>
                                 </div>
                                 <div class="rounded-2xl border border-slate-100 dark:border-sky-500/15 bg-slate-50 dark:bg-[#0d1e35] px-5 py-4">
                                     <p class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">Receive SMS Inbox Messages</p>
@@ -198,7 +198,7 @@ const sections = [
                                 </div>
                                 <div class="rounded-2xl border border-slate-100 dark:border-sky-500/15 bg-slate-50 dark:bg-[#0d1e35] px-5 py-4">
                                     <p class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">No Third-Party Sharing</p>
-                                    <p class="text-sm">SMS message content is never shared with third parties, sold, or used for marketing purposes. Access to message content is restricted to the account holder and NexaHub's automated delivery system.</p>
+                                    <p class="text-sm">SMS message content is never shared with third parties, sold, or used for marketing purposes. Access to message content is restricted to the account holder and Zavelyx's automated delivery system.</p>
                                 </div>
                             </div>
                         </div>
@@ -217,14 +217,14 @@ const sections = [
                             <ul class="list-disc pl-6 space-y-2">
                                 <li>All wallet balances (NGN, USD, USDC) are stored in segregated accounts and are never commingled with operational funds.</li>
                                 <li>All financial data is encrypted at rest using AES-256 and in transit using TLS 1.3.</li>
-                                <li>Payment card data is tokenized by PCI-DSS compliant payment processors. NexaHub never stores raw card numbers.</li>
+                                <li>Payment card data is tokenized by PCI-DSS compliant payment processors. Zavelyx never stores raw card numbers.</li>
                                 <li>Multi-factor authentication (MFA) is available and strongly recommended for all accounts holding wallet balances.</li>
                                 <li>Withdrawal requests trigger additional verification checks, including device fingerprinting and anomaly detection.</li>
                             </ul>
 
                             <div class="rounded-2xl border border-sky-200 dark:border-sky-500/20 bg-sky-50 dark:bg-sky-500/8 px-5 py-4">
                                 <p class="text-sm font-bold text-sky-800 dark:text-sky-300 mb-1">Cryptocurrency Deposits</p>
-                                <p class="text-sm text-sky-700 dark:text-sky-400">Crypto deposits (USDT, BTC, ETH, USDC) are recorded on-chain and are publicly visible on the relevant blockchain. NexaHub does not control the public nature of blockchain data. Your NexaHub wallet balance and activation history remain private and are accessible only to you and NexaHub's authorized compliance team.</p>
+                                <p class="text-sm text-sky-700 dark:text-sky-400">Crypto deposits (USDT, BTC, ETH, USDC) are recorded on-chain and are publicly visible on the relevant blockchain. Zavelyx does not control the public nature of blockchain data. Your Zavelyx wallet balance and activation history remain private and are accessible only to you and Zavelyx's authorized compliance team.</p>
                             </div>
                         </div>
                     </section>
@@ -238,12 +238,12 @@ const sections = [
                             <h2 class="text-2xl font-black text-slate-900 dark:text-white">3. Account Privacy</h2>
                         </div>
                         <div class="space-y-4 text-slate-600 dark:text-slate-400 leading-8">
-                            <p>Your NexaHub account data is private by default:</p>
+                            <p>Your Zavelyx account data is private by default:</p>
                             <ul class="list-disc pl-6 space-y-2">
-                                <li>Your wallet balances, transaction history, and order details are only visible to you and authorized NexaHub staff for support and compliance purposes.</li>
+                                <li>Your wallet balances, transaction history, and order details are only visible to you and authorized Zavelyx staff for support and compliance purposes.</li>
                                 <li>Your account email and personal details are never displayed publicly or shared with other users.</li>
                                 <li>You may update your account information at any time from your Profile settings.</li>
-                                <li>You may request a full export of your account data by contacting <a href="mailto:privacy@nexahub.io" class="text-sky-600 dark:text-sky-400 hover:underline font-medium">privacy@nexahub.io</a>.</li>
+                                <li>You may request a full export of your account data by contacting <a href="mailto:privacy@zavelyx.com" class="text-sky-600 dark:text-sky-400 hover:underline font-medium">privacy@zavelyx.com</a>.</li>
                                 <li>Account deletion requests will result in removal of personal data within 30 days, except where retention is required by law (e.g., financial transaction records may be retained for up to 7 years for compliance).</li>
                             </ul>
                         </div>
@@ -258,7 +258,7 @@ const sections = [
                             <h2 class="text-2xl font-black text-slate-900 dark:text-white">4. Security &amp; Fraud Monitoring</h2>
                         </div>
                         <div class="space-y-4 text-slate-600 dark:text-slate-400 leading-8">
-                            <p>To protect our platform and users, NexaHub uses automated and manual fraud monitoring systems:</p>
+                            <p>To protect our platform and users, Zavelyx uses automated and manual fraud monitoring systems:</p>
                             <ul class="list-disc pl-6 space-y-2">
                                 <li>We monitor transaction patterns, login locations, device changes, and order behavior to detect suspicious activity.</li>
                                 <li>Flagged accounts may be temporarily suspended pending manual review. We will notify you via email as soon as we are able.</li>
@@ -277,13 +277,13 @@ const sections = [
                             <h2 class="text-2xl font-black text-slate-900 dark:text-white">5. API &amp; OTP Data Usage</h2>
                         </div>
                         <div class="space-y-4 text-slate-600 dark:text-slate-400 leading-8">
-                            <p>For developers and businesses using NexaHub's REST API, and regarding OTP message handling:</p>
+                            <p>For developers and businesses using Zavelyx's REST API, and regarding OTP message handling:</p>
                             <ul class="list-disc pl-6 space-y-2">
                                 <li>API request logs (endpoint, timestamp, response codes, IP) are retained for 90 days for debugging and security purposes.</li>
                                 <li>API keys are treated as credentials — they are hashed in our database and never displayed after initial creation.</li>
                                 <li><strong class="text-slate-800 dark:text-slate-200">OTP Content:</strong> OTP messages received on virtual numbers are displayed on your dashboard only and are not stored permanently. OTP content is purged from our servers within 24 hours of session completion.</li>
                                 <li><strong class="text-slate-800 dark:text-slate-200">Activation Logs:</strong> Records of which service and country was activated (not the OTP content itself) are retained for 90 days for support and fraud prevention purposes.</li>
-                                <li>If you integrate NexaHub's API into your application, you are responsible for ensuring your users' data is handled in compliance with applicable privacy laws.</li>
+                                <li>If you integrate Zavelyx's API into your application, you are responsible for ensuring your users' data is handled in compliance with applicable privacy laws.</li>
                                 <li>We do not use your API request data or activation history for advertising or sell it to third parties.</li>
                             </ul>
                         </div>
@@ -298,7 +298,7 @@ const sections = [
                             <h2 class="text-2xl font-black text-slate-900 dark:text-white">6. Cookies &amp; Storage</h2>
                         </div>
                         <div class="space-y-4 text-slate-600 dark:text-slate-400 leading-8">
-                            <p>NexaHub uses the following types of browser storage:</p>
+                            <p>Zavelyx uses the following types of browser storage:</p>
                             <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/8">
                                 <table class="w-full text-sm">
                                     <thead class="bg-slate-50 dark:bg-[#0a1628]">
@@ -332,7 +332,7 @@ const sections = [
                                     </tbody>
                                 </table>
                             </div>
-                            <p>You can clear cookies at any time via your browser settings. Clearing session cookies will log you out of NexaHub.</p>
+                            <p>You can clear cookies at any time via your browser settings. Clearing session cookies will log you out of Zavelyx.</p>
                         </div>
                     </section>
 
@@ -386,7 +386,7 @@ const sections = [
 
                         <div class="mt-6 flex flex-wrap gap-4">
                             <Link href="/" class="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-sky-500/25 transition-all hover:bg-sky-600 hover:-translate-y-px">
-                                Back to NexaHub
+                                Back to Zavelyx
                             </Link>
                             <Link :href="route('terms')" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-5 py-3 text-sm font-bold text-slate-700 dark:text-slate-300 transition-all hover:bg-slate-50 dark:hover:bg-white/10">
                                 View Terms of Service

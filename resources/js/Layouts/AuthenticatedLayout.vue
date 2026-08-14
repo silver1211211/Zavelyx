@@ -295,7 +295,7 @@ const userLevel = computed(() => authUser.value?.account_level ?? 'basic');
                             <Zap class="w-4 h-4 text-white" :stroke-width="2.5" />
                         </div>
                         <span v-if="!sidebarCollapsed" class="text-[15px] font-black tracking-tight truncate" :class="isDark ? 'text-white' : 'text-slate-800'">
-                            {{ siteSettings.name || 'NexaHub' }}
+                            {{ siteSettings.name || 'Zavelyx' }}
                         </span>
                     </template>
                 </Link>

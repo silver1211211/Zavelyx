@@ -160,7 +160,7 @@ onUnmounted(() => clearInterval(timerInterval));
 </script>
 
 <template>
-    <Head title="Verify Your Email — NexaHub" />
+    <Head title="Verify Your Email — Zavelyx" />
 
     <div
         class="relative min-h-screen bg-white dark:bg-[#070d1a] text-slate-900 dark:text-white transition-colors duration-300 flex flex-col items-center justify-center px-5 py-20"

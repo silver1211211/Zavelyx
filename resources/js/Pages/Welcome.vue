@@ -27,7 +27,7 @@ import { getStoredTheme, setThemeInstant } from '@/utils/theme';
 
 const props = defineProps({ canLogin: Boolean, canRegister: Boolean, contactLink: String });
 
-const supportLink  = computed(() => props.contactLink || 'mailto:support@nexahub.io');
+const supportLink  = computed(() => props.contactLink || 'mailto:support@zavelyx.com');
 const siteSettings = computed(() => usePage().props.site_settings ?? {});
 
 const menuOpen   = ref(false);
@@ -219,11 +219,11 @@ const features = [
 ];
 
 const faqs = [
-    { q: 'What is a virtual number for OTP verification?',  a: "A virtual number is a real phone number that can receive SMS. You use it instead of your personal number when signing up for platforms. The OTP appears on your NexaHub dashboard within seconds of being sent." },
+    { q: 'What is a virtual number for OTP verification?',  a: "A virtual number is a real phone number that can receive SMS. You use it instead of your personal number when signing up for platforms. The OTP appears on your Zavelyx dashboard within seconds of being sent." },
     { q: 'What is the Receive SMS service?',                a: "Receive SMS gives you a virtual number with a live inbox. All incoming SMS messages to that number are displayed in real time on your dashboard — ideal for testing, monitoring verifications, or receiving SMS without exposing your personal number." },
     { q: 'How long do I have access to the number?',        a: "OTP activation sessions are typically 20 minutes. If no OTP arrives, your balance is automatically refunded. For Receive SMS, longer-term rental windows are available for extended use cases." },
     { q: "What if I don't receive the OTP?",                a: "If no OTP arrives within the window, the session is marked failed and your balance is refunded automatically — no support ticket required." },
-    { q: 'Are the numbers real mobile numbers?',            a: "Yes. All NexaHub numbers are real SIM-backed mobile numbers. They are not VOIP and work with strict SMS-only systems including WhatsApp, Google, major banks, and crypto exchanges." },
+    { q: 'Are the numbers real mobile numbers?',            a: "Yes. All Zavelyx numbers are real SIM-backed mobile numbers. They are not VOIP and work with strict SMS-only systems including WhatsApp, Google, major banks, and crypto exchanges." },
     { q: 'How does the Developer API work?',                a: "Authenticate with your API key, POST a request specifying service and country, receive a number and session ID, then poll or receive a webhook when the OTP arrives. Full docs are in your dashboard." },
     { q: 'Which payment methods are accepted?',             a: "We accept USDT, BTC, ETH, USDC, and other methods shown at checkout. Minimum deposit $1. Funds are credited after confirmation." },
     { q: 'Can I use a number multiple times?',              a: "OTP activations are single-use. For the Receive SMS service, you can receive multiple messages during the active rental window." },
@@ -279,7 +279,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Head title="NexaHub — Global SMS, OTP & Virtual Number Infrastructure" />
+    <Head title="Zavelyx — Global SMS, OTP & Virtual Number Infrastructure" />
 
     <div class="premium-page relative min-h-screen bg-white dark:bg-[#060d1a] text-slate-900 dark:text-white">
 
@@ -348,7 +348,7 @@ onBeforeUnmount(() => {
                                 <Zap class="h-4 w-4 text-white" />
                             </div>
                         </div>
-                        <span class="text-base font-black tracking-tight">{{ siteSettings.name || 'NexaHub' }}</span>
+                        <span class="text-base font-black tracking-tight">{{ siteSettings.name || 'Zavelyx' }}</span>
                     </template>
                 </Link>
 
@@ -591,7 +591,7 @@ onBeforeUnmount(() => {
                         <Zap class="h-3.5 w-3.5" /> Platform Capabilities
                     </div>
                     <h2 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-4">One platform. Four core services.</h2>
-                    <p class="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">NexaHub combines virtual numbers, SMS receiving, OTP activations, and developer API into one unified platform.</p>
+                    <p class="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">Zavelyx combines virtual numbers, SMS receiving, OTP activations, and developer API into one unified platform.</p>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     <div v-for="cap in capabilities" :key="cap.title"
@@ -739,7 +739,7 @@ onBeforeUnmount(() => {
                         </div>
                         <h2 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-5">Built for developers<br />and resellers</h2>
                         <p class="text-lg text-slate-600 dark:text-slate-400 leading-8 mb-8">
-                            Integrate NexaHub's SMS and virtual number capabilities directly into your application. REST API with full documentation, webhook events, and a sandbox environment.
+                            Integrate Zavelyx's SMS and virtual number capabilities directly into your application. REST API with full documentation, webhook events, and a sandbox environment.
                         </p>
                         <ul class="space-y-3 mb-8">
                             <li v-for="item in ['RESTful API with JSON responses', 'Real-time webhook events on OTP delivery', 'Sandbox environment for testing', 'API key management and rate limiting', 'Bulk activation support', 'Reseller pricing available']" :key="item" class="flex items-center gap-3">
@@ -832,7 +832,7 @@ onBeforeUnmount(() => {
                             Live Activity
                         </div>
                         <h2 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-5">Real activations,<br />happening now</h2>
-                        <p class="text-lg text-slate-600 dark:text-slate-400 leading-8 mb-8">Thousands of OTP activations and SMS deliveries happen through NexaHub every hour. Join them — your first activation is seconds away.</p>
+                        <p class="text-lg text-slate-600 dark:text-slate-400 leading-8 mb-8">Thousands of OTP activations and SMS deliveries happen through Zavelyx every hour. Join them — your first activation is seconds away.</p>
                         <Link :href="route('register')" class="inline-flex items-center gap-2 rounded-2xl bg-sky-500 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-sky-500/30 transition-all hover:bg-sky-600 hover:-translate-y-px hover:shadow-sky-500/45 active:scale-[0.98]">
                             Start Now <ArrowRight class="h-4 w-4" />
                         </Link>
@@ -867,12 +867,12 @@ onBeforeUnmount(() => {
             </div>
         </section>
 
-        <!-- ── Why NexaHub ── -->
+        <!-- ── Why Zavelyx ── -->
         <section id="features" class="py-24 px-5 sm:px-8">
             <div class="mx-auto max-w-7xl">
                 <div class="text-center mb-14">
                     <div class="inline-flex items-center gap-2 rounded-full border border-violet-200 dark:border-violet-500/25 bg-violet-50 dark:bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-700 dark:text-violet-400 mb-5">
-                        <Check class="h-3.5 w-3.5" /> Why NexaHub
+                        <Check class="h-3.5 w-3.5" /> Why Zavelyx
                     </div>
                     <h2 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-4">Built for reliability at scale</h2>
                     <p class="text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto">Every feature designed to deliver OTPs fast, reliably, and affordably.</p>
@@ -916,7 +916,7 @@ onBeforeUnmount(() => {
                         <MessageCircle class="h-3.5 w-3.5" /> FAQ
                     </div>
                     <h2 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-4">Common questions</h2>
-                    <p class="text-lg text-slate-600 dark:text-slate-400">Everything you need to know about NexaHub services.</p>
+                    <p class="text-lg text-slate-600 dark:text-slate-400">Everything you need to know about Zavelyx services.</p>
                 </div>
                 <div class="space-y-2.5">
                     <div v-for="(faq, i) in faqs" :key="i"
@@ -984,7 +984,7 @@ onBeforeUnmount(() => {
                                         <Zap class="h-4 w-4 text-white" />
                                     </div>
                                 </div>
-                                <span class="text-base font-black">{{ siteSettings.name || 'NexaHub' }}</span>
+                                <span class="text-base font-black">{{ siteSettings.name || 'Zavelyx' }}</span>
                             </template>
                         </div>
                         <p class="text-sm text-slate-500 dark:text-slate-400 leading-7 max-w-[210px]">Global SMS, OTP &amp; virtual number infrastructure for individuals and enterprises.</p>
@@ -1002,7 +1002,7 @@ onBeforeUnmount(() => {
                     <div>
                         <p class="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-400 mb-4">Company</p>
                         <ul class="space-y-3">
-                            <li><a href="#features" class="text-sm text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">Why NexaHub</a></li>
+                            <li><a href="#features" class="text-sm text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">Why Zavelyx</a></li>
                             <li><a href="#faq"       class="text-sm text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">FAQ</a></li>
                             <li><a :href="supportLink" class="text-sm text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">Contact Support</a></li>
                             <li><a :href="supportLink" class="text-sm text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">API Inquiries</a></li>
@@ -1018,7 +1018,7 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 dark:border-white/[0.07] pt-8">
-                    <p class="text-sm text-slate-400 dark:text-slate-400">{{ siteSettings.footer_text || '© 2026 NexaHub. All rights reserved.' }}</p>
+                    <p class="text-sm text-slate-400 dark:text-slate-400">{{ siteSettings.footer_text || '© 2026 Zavelyx. All rights reserved.' }}</p>
                     <div class="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-400">
                         <ShieldCheck class="h-3.5 w-3.5 text-sky-500/60" />
                         <span>Secured with 256-bit TLS encryption</span>

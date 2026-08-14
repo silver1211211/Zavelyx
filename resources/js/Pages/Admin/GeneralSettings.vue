@@ -163,7 +163,7 @@ const timezones = [
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="label">Site Name</label>
-                            <input v-model="generalForm.site_name" type="text" class="input" placeholder="NexaHub" />
+                            <input v-model="generalForm.site_name" type="text" class="input" placeholder="Zavelyx" />
                             <p v-if="generalForm.errors.site_name" class="field-error">{{ generalForm.errors.site_name }}</p>
                         </div>
                         <div>
@@ -197,7 +197,7 @@ const timezones = [
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="label">Support Email</label>
-                        <input v-model="generalForm.support_email" type="email" class="input" placeholder="support@nexahub.io" />
+                        <input v-model="generalForm.support_email" type="email" class="input" placeholder="support@zavelyx.com" />
                     </div>
                     <div>
                         <label class="label">Support Phone</label>
@@ -205,7 +205,7 @@ const timezones = [
                     </div>
                     <div>
                         <label class="label">Telegram</label>
-                        <input v-model="generalForm.support_telegram" type="text" class="input" placeholder="https://t.me/nexahub_support" />
+                        <input v-model="generalForm.support_telegram" type="text" class="input" placeholder="https://t.me/zavelyx_support" />
                     </div>
                     <div>
                         <label class="label">WhatsApp</label>
@@ -217,7 +217,7 @@ const timezones = [
                     </div>
                     <div>
                         <label class="label">Global Contact Link <span class="text-slate-400 font-normal normal-case">(homepage/footer/FAQ)</span></label>
-                        <input v-model="generalForm.contact_link" type="text" class="input" placeholder="mailto:support@nexahub.io" />
+                        <input v-model="generalForm.contact_link" type="text" class="input" placeholder="mailto:support@zavelyx.com" />
                     </div>
                 </div>
             </div>
@@ -346,7 +346,7 @@ const timezones = [
                 <div class="space-y-4">
                     <div>
                         <label class="label">Meta Title <span class="text-slate-400 font-normal normal-case">(max 200 chars)</span></label>
-                        <input v-model="seoForm.meta_title" type="text" class="input" placeholder="NexaHub — Global SMS & Virtual Number Infrastructure" />
+                        <input v-model="seoForm.meta_title" type="text" class="input" placeholder="Zavelyx — Global SMS & Virtual Number Infrastructure" />
                         <p class="mt-1 text-[11px] text-slate-400">{{ seoForm.meta_title?.length ?? 0 }} / 200</p>
                     </div>
                     <div>
@@ -374,7 +374,7 @@ const timezones = [
                     </div>
                     <div>
                         <label class="label">OG Image URL</label>
-                        <input v-model="seoForm.og_image_url" type="url" class="input" placeholder="https://cdn.nexahub.io/og-image.png" />
+                        <input v-model="seoForm.og_image_url" type="url" class="input" placeholder="https://cdn.zavelyx.com/og-image.png" />
                     </div>
                 </div>
             </div>
@@ -443,7 +443,7 @@ const timezones = [
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="label">Link URL <span class="normal-case font-normal">(optional)</span></label>
-                            <input v-model="homepageForm.announcement_link" type="url" class="input" placeholder="https://nexahub.io/services" />
+                            <input v-model="homepageForm.announcement_link" type="url" class="input" placeholder="https://zavelyx.com/services" />
                         </div>
                         <div>
                             <label class="label">CTA Button Text <span class="normal-case font-normal">(optional)</span></label>
@@ -536,7 +536,7 @@ const timezones = [
                 <h2 class="text-[14px] font-bold text-slate-900 dark:text-white mb-3">Footer</h2>
                 <div>
                     <label class="label">Footer Copyright Text</label>
-                    <input v-model="homepageForm.footer_text" type="text" class="input" placeholder="© 2026 NexaHub. All rights reserved." />
+                    <input v-model="homepageForm.footer_text" type="text" class="input" placeholder="© 2026 Zavelyx. All rights reserved." />
                 </div>
             </div>
 

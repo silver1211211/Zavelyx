@@ -47,22 +47,22 @@ class GeneralSettingsController extends Controller
     {
         return [
             'general' => [
-                'site_name'            => Setting::get('site.name', 'NexaHub'),
+                'site_name'            => Setting::get('site.name', 'Zavelyx'),
                 'site_tagline'         => Setting::get('site.tagline', 'Global SMS & Virtual Number Infrastructure'),
-                'site_description'     => Setting::get('site.description', 'NexaHub is a premium virtual number and OTP activation platform.'),
-                'support_email'        => Setting::get('site.support_email', 'support@nexahub.io'),
+                'site_description'     => Setting::get('site.description', 'Zavelyx is a premium virtual number and OTP activation platform.'),
+                'support_email'        => Setting::get('site.support_email', 'support@zavelyx.com'),
                 'support_phone'        => Setting::get('site.support_phone', ''),
                 'support_telegram'     => Setting::get('site.support_telegram', ''),
                 'support_whatsapp'     => Setting::get('site.support_whatsapp', ''),
                 'support_discord'      => Setting::get('site.support_discord', ''),
-                'contact_link'         => Setting::get('contact.link', 'mailto:support@nexahub.io'),
+                'contact_link'         => Setting::get('contact.link', 'mailto:support@zavelyx.com'),
                 'business_address'     => Setting::get('site.business_address', ''),
                 'timezone'             => Setting::get('site.timezone', 'UTC'),
                 'maintenance_mode'     => Setting::get('site.maintenance_mode', '0') === '1',
                 'maintenance_message'  => Setting::get('site.maintenance_message', 'We are performing scheduled maintenance. We\'ll be back shortly.'),
             ],
             'seo' => [
-                'meta_title'          => Setting::get('seo.meta_title', 'NexaHub — Global SMS & Virtual Number Infrastructure'),
+                'meta_title'          => Setting::get('seo.meta_title', 'Zavelyx — Global SMS & Virtual Number Infrastructure'),
                 'meta_description'    => Setting::get('seo.meta_description', 'Receive OTPs instantly on 150+ countries and 700+ operators.'),
                 'meta_keywords'       => Setting::get('seo.meta_keywords', 'virtual number, OTP, SMS verification, receive SMS, phone number'),
                 'og_title'            => Setting::get('seo.og_title', ''),
@@ -81,7 +81,7 @@ class GeneralSettingsController extends Controller
                 'announcement_color'    => Setting::get('homepage.announcement_color', 'sky'),
                 'announcement_icon'     => Setting::get('homepage.announcement_icon', ''),
                 'announcement_pinned'   => Setting::get('homepage.announcement_pinned', '0') === '1',
-                'footer_text'           => Setting::get('homepage.footer_text', '© 2026 NexaHub. All rights reserved.'),
+                'footer_text'           => Setting::get('homepage.footer_text', '© 2026 Zavelyx. All rights reserved.'),
                 'stats_activations'     => Setting::get('homepage.stats_activations', '2.4'),
                 'stats_countries'       => Setting::get('homepage.stats_countries', '150'),
                 'stats_operators'       => Setting::get('homepage.stats_operators', '700'),
@@ -134,7 +134,7 @@ class GeneralSettingsController extends Controller
         Setting::set('site.support_telegram', $validated['support_telegram']   ?? '');
         Setting::set('site.support_whatsapp', $validated['support_whatsapp']   ?? '');
         Setting::set('site.support_discord',  $validated['support_discord']    ?? '');
-        Setting::set('contact.link',          $validated['contact_link']       ?? 'mailto:support@nexahub.io');
+        Setting::set('contact.link',          $validated['contact_link']       ?? 'mailto:support@zavelyx.com');
         Setting::set('site.business_address', $validated['business_address']   ?? '');
         Setting::set('site.timezone',         $validated['timezone']);
         Setting::set('site.maintenance_mode', ($validated['maintenance_mode']  ?? false) ? '1' : '0');
@@ -199,7 +199,7 @@ class GeneralSettingsController extends Controller
         Setting::set('homepage.announcement_color',  $validated['announcement_color']  ?? 'sky');
         Setting::set('homepage.announcement_icon',   $validated['announcement_icon']   ?? '');
         Setting::set('homepage.announcement_pinned', ($validated['announcement_pinned'] ?? false) ? '1' : '0');
-        Setting::set('homepage.footer_text',          $validated['footer_text']          ?? '© 2026 NexaHub. All rights reserved.');
+        Setting::set('homepage.footer_text',          $validated['footer_text']          ?? '© 2026 Zavelyx. All rights reserved.');
         Setting::set('homepage.stats_activations',    (string) ($validated['stats_activations'] ?? '2.4'));
         Setting::set('homepage.stats_countries',      (string) ($validated['stats_countries']    ?? '150'));
         Setting::set('homepage.stats_operators',      (string) ($validated['stats_operators']    ?? '700'));

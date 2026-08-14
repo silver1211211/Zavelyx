@@ -111,7 +111,7 @@ const strengthTextColor = computed(() => {
 </script>
 
 <template>
-    <Head title="Create Account — NexaHub" />
+    <Head title="Create Account — Zavelyx" />
 
     <div class="relative min-h-screen bg-white dark:bg-[#070d1a] text-slate-900 dark:text-white transition-colors duration-300 overflow-hidden">
 
@@ -136,7 +136,7 @@ const strengthTextColor = computed(() => {
                                 <Zap class="h-4 w-4 text-white" />
                             </div>
                         </div>
-                        <span class="text-base font-black tracking-tight text-slate-900 dark:text-white">{{ siteSettings.name || 'NexaHub' }}</span>
+                        <span class="text-base font-black tracking-tight text-slate-900 dark:text-white">{{ siteSettings.name || 'Zavelyx' }}</span>
                     </template>
                 </Link>
 
@@ -163,7 +163,7 @@ const strengthTextColor = computed(() => {
                     <!-- Badge -->
                     <div class="inline-flex items-center gap-2 rounded-full border border-sky-200 dark:border-sky-500/25 bg-sky-50 dark:bg-sky-900/40 px-4 py-2 text-sm font-semibold text-sky-700 dark:text-sky-300">
                         <Zap class="h-3.5 w-3.5" />
-                        Join NexaHub
+                        Join Zavelyx
                     </div>
 
                     <!-- Headline -->
@@ -200,7 +200,7 @@ const strengthTextColor = computed(() => {
                         </div>
                         <div>
                             <p class="text-sm font-bold text-slate-900 dark:text-white">Join 12K+ users</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">receiving OTPs with NexaHub</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">receiving OTPs with Zavelyx</p>
                         </div>
                     </div>
                 </div>
@@ -358,7 +358,7 @@ const strengthTextColor = computed(() => {
                                 class="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-slate-300 dark:border-white/25 text-sky-500 focus:ring-sky-400 cursor-pointer"
                             />
                             <label for="terms" class="text-xs leading-relaxed text-slate-600 dark:text-slate-300 cursor-pointer">
-                                I agree to NexaHub's
+                                I agree to Zavelyx's
                                 <Link href="/terms" class="font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors">Terms of Service</Link>
                                 and
                                 <Link :href="route('privacy')" class="font-semibold text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors">Privacy Policy</Link>.

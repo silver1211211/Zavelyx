@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $code }} {{ $title }} — {{ config('app.name', 'NexaHub') }}</title>
+    <title>{{ $code }} {{ $title }} — {{ config('app.name', 'Zavelyx') }}</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -354,7 +354,7 @@
 
     <!-- Footer -->
     <footer>
-        {{ config('app.name', 'NexaHub') }} &nbsp;·&nbsp; Need help? <a href="mailto:support@nexahub.io">support@nexahub.io</a>
+        {{ config('app.name', 'Zavelyx') }} &nbsp;·&nbsp; Need help? <a href="mailto:support@zavelyx.com">support@zavelyx.com</a>
     </footer>
 
 </div>

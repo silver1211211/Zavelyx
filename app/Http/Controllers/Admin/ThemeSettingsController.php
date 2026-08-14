@@ -13,8 +13,8 @@ class ThemeSettingsController extends Controller
 {
     const PRESETS = [
         'nexahub' => [
-            'name'        => 'NexaHub Default',
-            'description' => 'Sky blue & navy — the original NexaHub palette',
+            'name'        => 'Zavelyx Default',
+            'description' => 'Sky blue & navy — the original Zavelyx palette',
             'primary'     => '#0ea5e9',
             'secondary'   => '#6366f1',
             'accent'      => '#22d3ee',

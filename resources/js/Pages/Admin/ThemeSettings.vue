@@ -202,7 +202,7 @@ const radiusOptions = [
                         <!-- Nav preview -->
                         <div class="flex items-center gap-2 mb-4 px-3 py-2 rounded-xl" :style="{ background: form.dark_card }">
                             <div class="w-5 h-5 rounded-lg flex-shrink-0" :style="{ background: form.primary }" />
-                            <span class="text-[11px] font-bold text-white">NexaHub</span>
+                            <span class="text-[11px] font-bold text-white">Zavelyx</span>
                             <div class="ml-auto flex gap-1.5">
                                 <div class="h-4 w-10 rounded-md" :style="{ background: form.primary + '30' }" />
                                 <div class="h-4 w-14 rounded-md" :style="{ background: form.primary }" />

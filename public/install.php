@@ -1,6 +1,6 @@
 <?php
 /**
- * NexaHub Installation Wizard
+ * Zavelyx Installation Wizard
  * Standalone installer — works before .env is configured.
  * Delete this file after installation is complete.
  */
@@ -175,7 +175,7 @@ function set_admin_credentials(string $username, string $password): void {
 }
 
 function create_lock(): void {
-    file_put_contents(LOCK_FILE, date('Y-m-d H:i:s') . ' — NexaHub installed');
+    file_put_contents(LOCK_FILE, date('Y-m-d H:i:s') . ' — Zavelyx installed');
 }
 
 // ── POST handlers ─────────────────────────────────────────────────────────────
@@ -212,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'next_3') {
-        $app_name    = trim($_POST['app_name']    ?? 'NexaHub');
+        $app_name    = trim($_POST['app_name']    ?? 'Zavelyx');
         $app_url     = rtrim(trim($_POST['app_url'] ?? 'https://yourdomain.com'), '/');
         $queue_driver = $_POST['queue_driver'] ?? 'database';
         $redis_host  = trim($_POST['redis_host'] ?? '127.0.0.1');
@@ -328,7 +328,7 @@ $log    = $_SESSION['install']['log']  ?? [];
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NexaHub Installer v<?= INSTALL_VERSION ?></title>
+<title>Zavelyx Installer v<?= INSTALL_VERSION ?></title>
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -536,7 +536,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
                 <div class="field-row">
                     <div class="field">
                         <label>Site Name</label>
-                        <input type="text" name="app_name" value="<?= htmlspecialchars($stored['app_name'] ?? 'NexaHub') ?>" required>
+                        <input type="text" name="app_name" value="<?= htmlspecialchars($stored['app_name'] ?? 'Zavelyx') ?>" required>
                     </div>
                     <div class="field">
                         <label>Site URL</label>
@@ -666,7 +666,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     <div class="card">
         <div class="card-header">
             <h1>Ready to Install</h1>
-            <p>Review your configuration and click <strong>Install NexaHub</strong> to begin. This will write your <code>.env</code>, run database migrations, and configure the application.</p>
+            <p>Review your configuration and click <strong>Install Zavelyx</strong> to begin. This will write your <code>.env</code>, run database migrations, and configure the application.</p>
         </div>
         <div class="card-body">
             <p class="section-title">Summary</p>
@@ -682,7 +682,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
                 <input type="hidden" name="action" value="run_install">
                 <div class="btn-row">
                     <button class="btn btn-primary" type="submit" id="install-btn" onclick="this.disabled=true;this.textContent='Installing…';this.closest('form').submit()">
-                        🚀 Install NexaHub
+                        🚀 Install Zavelyx
                     </button>
                 </div>
             </form>
@@ -694,7 +694,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
     <div class="card">
         <div class="card-header">
             <h1>Installation Complete</h1>
-            <p>NexaHub has been successfully installed on your server.</p>
+            <p>Zavelyx has been successfully installed on your server.</p>
         </div>
         <div class="card-body">
             <div style="text-align:center;margin-bottom:1.5rem">

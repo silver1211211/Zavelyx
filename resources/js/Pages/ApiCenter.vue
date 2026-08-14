@@ -177,7 +177,7 @@ const displayedKey = computed(() => page.props.flash?.newApiKey ?? props.apiKey 
                     </div>
                     API Center
                 </h1>
-                <p class="text-[13px] text-slate-400 dark:text-slate-400 mt-0.5">Integrate NexaHub into your app. REST API · Bearer token auth · JSON responses.</p>
+                <p class="text-[13px] text-slate-400 dark:text-slate-400 mt-0.5">Integrate Zavelyx into your app. REST API · Bearer token auth · JSON responses.</p>
             </div>
             <div class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-[#0d1e35] rounded-xl border border-slate-200 dark:border-sky-500/12 shrink-0">
                 <Globe class="w-3.5 h-3.5 text-sky-500 flex-shrink-0" />

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your NexaHub Verification Code</title>
+    <title>Your Zavelyx Verification Code</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f1f5f9;padding:40px 16px;">
@@ -39,7 +39,7 @@
                                 Hi <strong style="color:#0f172a;">{{ $user->name }}</strong>,
                             </p>
                             <p style="margin:0 0 36px;font-size:15px;color:#64748b;line-height:1.6;">
-                                Use the code below to verify your NexaHub account.<br>
+                                Use the code below to verify your Zavelyx account.<br>
                                 This code expires in <strong style="color:#0f172a;">10 minutes</strong>.
                             </p>
 
@@ -53,7 +53,7 @@
                             <div style="background:#fafafa;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:32px;text-align:left;">
                                 <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#374151;">🔒 Security reminder</p>
                                 <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">
-                                    Never share this code with anyone — NexaHub will never ask for it. If you didn't request this, you can safely ignore this email.
+                                    Never share this code with anyone — Zavelyx will never ask for it. If you didn't request this, you can safely ignore this email.
                                 </p>
                             </div>
 
@@ -67,7 +67,7 @@
                     <tr>
                         <td style="background:#f8fafc;border-radius:0 0 20px 20px;padding:24px 48px;text-align:center;border-top:1px solid #e2e8f0;">
                             <p style="margin:0 0 6px;font-size:12px;color:#94a3b8;">
-                                © {{ date('Y') }} NexaHub. All rights reserved.
+                                © {{ date('Y') }} Zavelyx. All rights reserved.
                             </p>
                             <p style="margin:0;font-size:12px;color:#cbd5e1;">
                                 SMM &amp; Digital Services &amp; Payment Ecosystem

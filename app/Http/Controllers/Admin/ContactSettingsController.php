@@ -14,7 +14,7 @@ class ContactSettingsController extends Controller
     public function index(): Response
     {
         return Inertia::render('Admin/ContactSettings', [
-            'contact_link' => Setting::get('contact.link', 'mailto:support@nexahub.io'),
+            'contact_link' => Setting::get('contact.link', 'mailto:support@zavelyx.com'),
         ]);
     }
 

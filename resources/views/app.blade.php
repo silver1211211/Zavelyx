@@ -19,8 +19,8 @@
             })();
         </script>
         @php
-            $siteName    = \App\Models\Setting::get('site.name', 'NexaHub');
-            $seoDesc     = \App\Models\Setting::get('seo.meta_description', 'NexaHub — Global SMS & Virtual Number Infrastructure. Receive OTPs instantly on 150+ countries.');
+            $siteName    = \App\Models\Setting::get('site.name', 'Zavelyx');
+            $seoDesc     = \App\Models\Setting::get('seo.meta_description', 'Zavelyx — Global SMS & Virtual Number Infrastructure. Receive OTPs instantly on 150+ countries.');
             $seoKeywords = \App\Models\Setting::get('seo.meta_keywords', 'virtual number, OTP, SMS verification, receive SMS');
             $ogTitle     = \App\Models\Setting::get('seo.og_title')     ?: \App\Models\Setting::get('seo.meta_title', $siteName);
             $ogDesc      = \App\Models\Setting::get('seo.og_description') ?: $seoDesc;

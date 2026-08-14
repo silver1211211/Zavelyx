@@ -21,7 +21,7 @@ class OtpVerificationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your NexaHub Verification Code: '.$this->code,
+            subject: 'Your Zavelyx Verification Code: '.$this->code,
         );
     }
 

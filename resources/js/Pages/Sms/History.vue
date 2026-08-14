@@ -5,7 +5,7 @@ import { History, Zap } from 'lucide-vue-next';
 </script>
 
 <template>
-    <Head title="OTP History — NexaHub" />
+    <Head title="OTP History — Zavelyx" />
     <AuthenticatedLayout>
         <div class="mb-6">
             <h1 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">

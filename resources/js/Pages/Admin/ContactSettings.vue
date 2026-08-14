@@ -6,7 +6,7 @@ import { computed, ref } from 'vue';
 
 const props = defineProps({ contact_link: String });
 
-const form = useForm({ contact_link: props.contact_link ?? 'mailto:support@nexahub.io' });
+const form = useForm({ contact_link: props.contact_link ?? 'mailto:support@zavelyx.com' });
 const flash = computed(() => usePage().props.flash ?? {});
 
 const linkType = computed(() => {
@@ -28,8 +28,8 @@ const typeLabel = computed(() => ({
 }[linkType.value] ?? null));
 
 const presets = [
-    { label: 'Email',     placeholder: 'mailto:support@nexahub.io',   icon: '✉️' },
-    { label: 'Telegram',  placeholder: 'https://t.me/nexahub_support', icon: '✈️' },
+    { label: 'Email',     placeholder: 'mailto:support@zavelyx.com',   icon: '✉️' },
+    { label: 'Telegram',  placeholder: 'https://t.me/zavelyx_support', icon: '✈️' },
     { label: 'WhatsApp',  placeholder: 'https://wa.me/1234567890',     icon: '💬' },
     { label: 'Discord',   placeholder: 'https://discord.gg/nexahub',   icon: '🎮' },
 ];
@@ -93,7 +93,7 @@ function save() {
                     <input
                         v-model="form.contact_link"
                         type="text"
-                        placeholder="mailto:support@nexahub.io"
+                        placeholder="mailto:support@zavelyx.com"
                         class="w-full px-4 py-3 rounded-xl border text-[13px] font-mono text-slate-800 dark:text-slate-100 bg-white dark:bg-[#060d1a] placeholder-slate-400 dark:placeholder-slate-600 transition-all duration-150 outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 dark:focus:border-sky-500"
                         :class="form.errors.contact_link
                             ? 'border-rose-400 dark:border-rose-500/50'

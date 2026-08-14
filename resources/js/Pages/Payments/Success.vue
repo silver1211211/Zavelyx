@@ -76,7 +76,7 @@ function fmtAmount(v) { return Number(v || 0).toFixed(2); }
 </script>
 
 <template>
-    <Head title="Payment Status — NexaHub" />
+    <Head title="Payment Status — Zavelyx" />
     <AuthenticatedLayout>
 
         <div class="max-w-lg mx-auto pt-8 pb-16 text-center">

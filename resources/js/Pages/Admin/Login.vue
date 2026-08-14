@@ -28,7 +28,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Admin Login — NexaHub" />
+    <Head title="Admin Login — Zavelyx" />
 
     <div class="min-h-screen bg-[#f0f4f8] dark:bg-[#060d18] flex items-center justify-center p-4 transition-colors duration-300">
 
@@ -139,7 +139,7 @@ onMounted(() => {
 
             <!-- Footer note -->
             <p class="text-center text-[11px] text-slate-400 dark:text-slate-600 mt-5">
-                NexaHub Admin — Restricted Access
+                Zavelyx Admin — Restricted Access
             </p>
         </div>
     </div>

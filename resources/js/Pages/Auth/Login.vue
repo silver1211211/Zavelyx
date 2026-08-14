@@ -86,7 +86,7 @@ const highlights = [
 </script>
 
 <template>
-    <Head title="Sign In — NexaHub" />
+    <Head title="Sign In — Zavelyx" />
 
     <div class="relative min-h-screen bg-white dark:bg-[#070d1a] text-slate-900 dark:text-white transition-colors duration-300 overflow-hidden">
 
@@ -111,7 +111,7 @@ const highlights = [
                                 <Zap class="h-4 w-4 text-white" />
                             </div>
                         </div>
-                        <span class="text-base font-black tracking-tight text-slate-900 dark:text-white">{{ siteSettings.name || 'NexaHub' }}</span>
+                        <span class="text-base font-black tracking-tight text-slate-900 dark:text-white">{{ siteSettings.name || 'Zavelyx' }}</span>
                     </template>
                 </Link>
 
@@ -205,12 +205,12 @@ const highlights = [
                             </div>
                         </div>
                         <h2 class="mt-5 text-2xl font-black text-slate-900 dark:text-white">Welcome back</h2>
-                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Sign in to NexaHub</p>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Sign in to Zavelyx</p>
                     </div>
 
                     <!-- Desktop heading -->
                     <div class="mb-8 hidden lg:block">
-                        <h2 class="text-2xl font-black text-slate-900 dark:text-white">Sign in to NexaHub</h2>
+                        <h2 class="text-2xl font-black text-slate-900 dark:text-white">Sign in to Zavelyx</h2>
                         <p class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Enter your credentials to continue</p>
                     </div>
 
@@ -312,7 +312,7 @@ const highlights = [
                                 Signing in…
                             </span>
                             <span v-else class="flex items-center gap-2">
-                                Sign in to NexaHub
+                                Sign in to Zavelyx
                                 <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                             </span>
                         </button>

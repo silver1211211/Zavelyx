@@ -611,7 +611,7 @@ function copy(text, key) {
                             <Palette class="w-4 h-4 text-sky-500" />
                             Appearance
                         </h2>
-                        <p class="text-[12px] text-slate-400 dark:text-slate-400 mb-6">Customize how NexaHub looks for you.</p>
+                        <p class="text-[12px] text-slate-400 dark:text-slate-400 mb-6">Customize how Zavelyx looks for you.</p>
 
                         <div class="space-y-5 max-w-lg">
                             <!-- Theme mode -->

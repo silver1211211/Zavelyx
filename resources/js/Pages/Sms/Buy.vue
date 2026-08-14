@@ -179,7 +179,7 @@ const buyError  = ref(null);
 const fatalError = ref(null); // error boundary — caught by onErrorCaptured
 
 onErrorCaptured((err) => {
-    console.error('[NexaHub] Buy page error captured:', err);
+    console.error('[Zavelyx] Buy page error captured:', err);
     fatalError.value = err?.message || 'An unexpected error occurred. Please refresh the page.';
     return false; // stop propagation
 });
@@ -468,7 +468,7 @@ async function loadServices() {
     // 2. Background-fetch the live service list (no loading indicator needed — sidebar silently refreshes)
     svcsRefreshing.value = true;
     try {
-        console.log('[NexaHub] loadServices: fetching /sms/services…');
+        console.log('[Zavelyx] loadServices: fetching /sms/services…');
         const res = await fetchTimeout('/sms/services', {
             credentials: 'same-origin',
             headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
@@ -476,7 +476,7 @@ async function loadServices() {
         let data;
         try   { data = await res.json(); }
         catch { throw new Error('Server returned invalid JSON.'); }
-        console.log(`[NexaHub] /sms/services → HTTP ${res.status}`, Array.isArray(data) ? `${data.length} services` : data);
+        console.log(`[Zavelyx] /sms/services → HTTP ${res.status}`, Array.isArray(data) ? `${data.length} services` : data);
         if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
         const list = (Array.isArray(data) ? data : [])
             .filter(s => s.id != null && s.id !== '')
@@ -520,7 +520,7 @@ async function loadCountryStock(serviceId) {
     debouncedCountrySearch.value = '';
     buyError.value               = null;
 
-    console.log(`[NexaHub] loadCountryStock(${serviceId}) id=${myId}`);
+    console.log(`[Zavelyx] loadCountryStock(${serviceId}) id=${myId}`);
 
     try {
         const url = `/sms/country-stock?service=${encodeURIComponent(serviceId)}`;
@@ -529,21 +529,21 @@ async function loadCountryStock(serviceId) {
             { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } },
             35000,
         );
-        if (myId !== countryLoadId) { console.log(`[NexaHub] loadCountryStock(${serviceId}) superseded — discarding`); return; }
+        if (myId !== countryLoadId) { console.log(`[Zavelyx] loadCountryStock(${serviceId}) superseded — discarding`); return; }
 
         let data;
         try { data = await res.json(); } catch (e) { throw new Error(`Invalid server response: ${e.message}`); }
 
-        console.log(`[NexaHub] /sms/country-stock?service=${serviceId} → HTTP ${res.status}`, data);
+        console.log(`[Zavelyx] /sms/country-stock?service=${serviceId} → HTTP ${res.status}`, data);
 
         if (!res.ok) throw new Error(data?.error ?? `Server error ${res.status}`);
 
         const list = (Array.isArray(data) ? data : []).map(normalizeCountry);
-        console.log(`[NexaHub] Got ${list.length} countries for ${serviceId}`);
+        console.log(`[Zavelyx] Got ${list.length} countries for ${serviceId}`);
         countryStockList.value = list;
     } catch (e) {
         if (myId !== countryLoadId) return;
-        console.error(`[NexaHub] loadCountryStock(${serviceId}) failed:`, e);
+        console.error(`[Zavelyx] loadCountryStock(${serviceId}) failed:`, e);
         countriesError.value = e.name === 'AbortError'
             ? 'Country lookup timed out. Use Best Available above, or retry below.'
             : (e.message || 'Could not load country options.');
@@ -556,7 +556,7 @@ async function loadCountryStock(serviceId) {
 function selectService(svc) {
     if (!svc) return;
     if (selectedSvc.value?.id === svc.id) return; // already selected — no-op
-    console.log(`[NexaHub] selectService(${svc.id})`);
+    console.log(`[Zavelyx] selectService(${svc.id})`);
     // Pre-set loading state synchronously so the skeleton shows before the watch fires
     loadingCountries.value  = true;
     countriesError.value    = null;
@@ -638,7 +638,7 @@ onMounted(() => { loadServices(); });
 </script>
 
 <template>
-    <Head title="Buy Number — NexaHub" />
+    <Head title="Buy Number — Zavelyx" />
     <AuthenticatedLayout>
 
         <!-- ── Fatal error boundary ─────────────────────────────────────────── -->

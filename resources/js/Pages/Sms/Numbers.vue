@@ -238,7 +238,7 @@ onUnmounted(() => { clearInterval(pollTimer); });
 </script>
 
 <template>
-    <Head title="My Numbers — NexaHub" />
+    <Head title="My Numbers — Zavelyx" />
     <AuthenticatedLayout>
 
         <!-- Header -->

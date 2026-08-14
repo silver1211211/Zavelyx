@@ -153,7 +153,7 @@ function formatDate(str) {
                     <div class="space-y-4">
                         <div v-for="(step, i) in [
                             { title: 'Share your link', desc: 'Share your unique referral URL or code with friends.' },
-                            { title: 'They sign up', desc: 'They register using your link and become a NexaHub user.' },
+                            { title: 'They sign up', desc: 'They register using your link and become a Zavelyx user.' },
                             { title: 'You both earn', desc: 'You get a 5% bonus on their first deposit added to your balance.' },
                         ]" :key="i" class="flex items-start gap-3">
                             <div class="w-6 h-6 rounded-full bg-sky-500/15 flex items-center justify-center text-sky-600 dark:text-sky-400 text-[11px] font-black flex-shrink-0 mt-0.5">{{ i + 1 }}</div>
