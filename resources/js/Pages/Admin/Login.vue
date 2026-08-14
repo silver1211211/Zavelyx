@@ -53,7 +53,7 @@ onMounted(() => {
                     </div>
                 </div>
                 <h1 class="text-[22px] font-black tracking-tight text-slate-900 dark:text-white">
-                    Nexa<span class="text-sky-500">Hub</span>
+                    Zave<span class="text-sky-500">lyx</span>
                 </h1>
                 <div class="flex items-center gap-1.5 mt-1">
                     <Shield class="w-3 h-3 text-slate-400 dark:text-slate-600" />
