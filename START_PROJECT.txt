@@ -1,0 +1,136 @@
+================================================================
+  SILVERBOOST — PROJECT STARTUP GUIDE
+  Project URL: http://jeff.test
+================================================================
+
+GOOD NEWS: This project now starts AUTOMATICALLY after every PC reboot.
+You do NOT need to run any terminal commands to see the website.
+
+----------------------------------------------------------------
+WHAT HAPPENS AUTOMATICALLY ON PC STARTUP
+----------------------------------------------------------------
+
+1. Windows boots up
+2. Laragon launches automatically (added to Windows startup)
+3. Laragon auto-starts Apache (web server) and MySQL (database)
+4. jeff.test resolves to 127.0.0.1 via your hosts file
+5. Website is live at: http://jeff.test
+
+That's it. No manual steps needed.
+
+----------------------------------------------------------------
+STEPS TO START THE PROJECT (MANUAL — if something goes wrong)
+----------------------------------------------------------------
+
+Step 1: Open Laragon
+   - Look in the system tray (bottom-right corner of taskbar)
+   - If Laragon icon is there, it is already running
+   - If not: open C:\laragon\laragon.exe
+
+Step 2: Start Services in Laragon
+   - The Laragon window should show Apache and MySQL as "Running"
+   - If they are stopped: click the green "Start All" button
+   - Wait 5–10 seconds for both to turn green
+
+Step 3: Open your browser
+   - Go to: http://jeff.test
+   - The SilverBoost dashboard should load fully with all CSS/JS
+
+----------------------------------------------------------------
+DO YOU NEED "npm run dev" ?
+----------------------------------------------------------------
+
+NO. You do NOT need to run "npm run dev" ever again for normal use.
+
+Production assets are pre-built and stored in:
+   public/build/assets/
+
+These assets load automatically through the Vite manifest.
+The website works fully without any npm commands running.
+
+ONLY run "npm run dev" if you are actively editing frontend
+files (Vue components, CSS) and want live hot-reloading.
+After you stop "npm run dev", run "npm run build" once.
+
+----------------------------------------------------------------
+IF YOU SEE A BLANK PAGE OR MISSING CSS AFTER RESTART
+----------------------------------------------------------------
+
+Cause: A leftover "public/hot" file from a previous dev session.
+
+Fix — Delete this file if it exists:
+   C:\laragon\www\jeff\public\hot
+
+Then refresh the browser. The page will load correctly.
+
+To prevent this: always run "npm run build" after "npm run dev".
+
+----------------------------------------------------------------
+DATABASE
+----------------------------------------------------------------
+
+Connection: MySQL on 127.0.0.1:3306
+Database:   jeffpay
+Username:   root
+Password:   (empty)
+
+MySQL starts automatically with Laragon.
+You do NOT need to configure anything after restart.
+
+----------------------------------------------------------------
+ENVIRONMENT
+----------------------------------------------------------------
+
+App URL:        http://jeff.test
+Environment:    local (development mode)
+PHP Version:    8.3.30
+Laravel:        Served via Apache (Laragon)
+Assets:         Pre-built via Vite (public/build/)
+Sessions:       File-based (no Redis needed)
+Cache:          File-based (no Redis needed)
+
+----------------------------------------------------------------
+USEFUL COMMANDS (run in terminal from project root)
+----------------------------------------------------------------
+
+Rebuild frontend assets (after editing Vue/CSS):
+   npm run build
+
+Clear all Laravel caches:
+   php artisan optimize:clear
+
+Clear and cache for performance:
+   php artisan optimize
+
+Check database connection:
+   php artisan db:show
+
+Run database migrations:
+   php artisan migrate
+
+----------------------------------------------------------------
+IF LARAGON DOES NOT AUTO-START ON REBOOT
+----------------------------------------------------------------
+
+Laragon is registered in Windows startup at:
+   HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+   Key: Laragon
+   Value: "C:\laragon\laragon.exe" --autostart
+
+To re-add manually, open PowerShell and run:
+   Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" -Name "Laragon" -Value '"C:\laragon\laragon.exe" --autostart' -Type String
+
+Or just open Laragon manually and it works the same.
+
+----------------------------------------------------------------
+PROJECT STRUCTURE SUMMARY
+----------------------------------------------------------------
+
+Web root:       C:\laragon\www\jeff\public\
+Laravel root:   C:\laragon\www\jeff\
+Config file:    C:\laragon\www\jeff\.env
+Vhost config:   C:\laragon\etc\apache2\sites-enabled\auto.jeff.test.conf
+Hosts entry:    C:\Windows\System32\drivers\etc\hosts
+                127.0.0.1  jeff.test  #laragon magic!
+
+================================================================

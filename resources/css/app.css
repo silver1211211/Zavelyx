@@ -1,0 +1,254 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    /* ─────────────────────────────────────────────────────────────
+       LIGHT THEME  (default / :root)
+    ───────────────────────────────────────────────────────────── */
+    :root {
+        color-scheme: light;
+
+        /* Page */
+        --bg-page:   #f0f5fb;
+
+        /* Sidebar */
+        --sb-from:       #ffffff;
+        --sb-to:         #f8fafc;
+        --sb-border:     rgba(0, 0, 0, 0.07);
+        --sb-glow-op:    0;
+        --sb-sep-text:   rgba(71, 85, 105, 0.65);
+        --sb-sep-line:   rgba(0, 0, 0, 0.06);
+        --sb-dot:        rgba(0, 0, 0, 0.08);
+        --sb-hover:      rgba(0, 0, 0, 0.045);
+        --sb-user-bg:    rgba(0, 0, 0, 0.03);
+
+        /* Navbar */
+        --nav-bg:     rgba(255, 255, 255, 0.94);
+        --nav-border: rgba(0, 0, 0, 0.07);
+        --nav-btn-bg: rgba(0, 0, 0, 0.03);
+        --nav-btn-br: rgba(0, 0, 0, 0.09);
+
+        /* Dropdowns */
+        --dd-bg:     #ffffff;
+        --dd-border: rgba(0, 0, 0, 0.09);
+        --dd-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+        --dd-sep:    rgba(0, 0, 0, 0.06);
+        --dd-hover:  rgba(0, 0, 0, 0.04);
+
+        /* Hero card */
+        --hero-from:        #dbeafe;
+        --hero-mid:         #eff6ff;
+        --hero-to:          #f8fafc;
+        --hero-border:      rgba(14, 165, 233, 0.25);
+        --hero-pill-bg:     rgba(14, 165, 233, 0.07);
+        --hero-pill-border: rgba(14, 165, 233, 0.15);
+
+        /* Tables / lists */
+        --tbl-bg:      #ffffff;
+        --tbl-border:  rgba(0, 0, 0, 0.07);
+        --tbl-divider: rgba(0, 0, 0, 0.05);
+        --tbl-hover:   rgba(0, 0, 0, 0.025);
+        --sec-label:   rgba(71, 85, 105, 0.65);
+        --sec-line:    rgba(15, 23, 42, 0.1);
+
+        /* Platform "All" button (active) */
+        --platform-all-from:   #dbeafe;
+        --platform-all-to:     #eff6ff;
+        --platform-all-border: rgba(14, 165, 233, 0.25);
+
+        /* Hero grid overlay */
+        --hero-grid: rgba(0, 0, 0, 0.06);
+
+        /* Slide panel */
+        --panel-bg:            #ffffff;
+        --panel-border:        rgba(0, 0, 0, 0.07);
+        --panel-header-bg:     rgba(0, 0, 0, 0.015);
+        --panel-header-border: rgba(0, 0, 0, 0.06);
+        --panel-section-bg:    rgba(0, 0, 0, 0.025);
+        --panel-section-border:rgba(0, 0, 0, 0.06);
+        --panel-track-bg:      rgba(0, 0, 0, 0.07);
+        --panel-row-border:    rgba(0, 0, 0, 0.04);
+        --panel-footer-bg:     rgba(0, 0, 0, 0.01);
+        --panel-btn-bg:        rgba(0, 0, 0, 0.03);
+        --panel-btn-border:    rgba(0, 0, 0, 0.08);
+
+        /* Canonical surfaces (cards, inputs, panels — use instead of one-off hexes) */
+        --surface-card:     #ffffff;
+        --surface-elevated: #f8fafc;
+        --surface-border:   rgba(0, 0, 0, 0.07);
+        --surface-muted:    rgba(71, 85, 105, 0.65);
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       DARK THEME  (.dark on <html>)
+    ───────────────────────────────────────────────────────────── */
+    .dark {
+        color-scheme: dark;
+
+        --bg-page:   #060c18;
+
+        --sb-from:       #080f1e;
+        --sb-to:         #070c1a;
+        --sb-border:     rgba(255, 255, 255, 0.05);
+        --sb-glow-op:    0.30;
+        --sb-sep-text:   rgba(148, 163, 184, 0.35);
+        --sb-sep-line:   rgba(255, 255, 255, 0.04);
+        --sb-dot:        rgba(255, 255, 255, 0.08);
+        --sb-hover:      rgba(255, 255, 255, 0.04);
+        --sb-user-bg:    rgba(255, 255, 255, 0.03);
+
+        --nav-bg:     rgba(6, 12, 24, 0.90);
+        --nav-border: rgba(255, 255, 255, 0.05);
+        --nav-btn-bg: rgba(255, 255, 255, 0.03);
+        --nav-btn-br: rgba(255, 255, 255, 0.07);
+
+        --dd-bg:     #0a1628;
+        --dd-border: rgba(255, 255, 255, 0.08);
+        --dd-shadow: 0 16px 60px rgba(0, 0, 0, 0.80);
+        --dd-sep:    rgba(255, 255, 255, 0.05);
+        --dd-hover:  rgba(255, 255, 255, 0.04);
+
+        --hero-from:        #0d1e38;
+        --hero-mid:         #091424;
+        --hero-to:          #060f1c;
+        --hero-border:      rgba(255, 255, 255, 0.06);
+        --hero-pill-bg:     rgba(255, 255, 255, 0.06);
+        --hero-pill-border: rgba(255, 255, 255, 0.08);
+
+        --tbl-bg:      rgba(255, 255, 255, 0.02);
+        --tbl-border:  rgba(255, 255, 255, 0.05);
+        --tbl-divider: rgba(255, 255, 255, 0.04);
+        --tbl-hover:   rgba(255, 255, 255, 0.025);
+        --sec-label:   rgba(148, 163, 184, 0.35);
+        --sec-line:    rgba(255, 255, 255, 0.05);
+
+        /* Platform "All" button (active) */
+        --platform-all-from:   #1e293b;
+        --platform-all-to:     #0f172a;
+        --platform-all-border: rgba(255, 255, 255, 0.10);
+
+        /* Hero grid overlay */
+        --hero-grid: rgba(255, 255, 255, 0.4);
+
+        /* Slide panel */
+        --panel-bg:            #0b1627;
+        --panel-border:        rgba(255, 255, 255, 0.07);
+        --panel-header-bg:     rgba(255, 255, 255, 0.02);
+        --panel-header-border: rgba(255, 255, 255, 0.06);
+        --panel-section-bg:    rgba(255, 255, 255, 0.03);
+        --panel-section-border:rgba(255, 255, 255, 0.06);
+        --panel-track-bg:      rgba(255, 255, 255, 0.06);
+        --panel-row-border:    rgba(255, 255, 255, 0.04);
+        --panel-footer-bg:     rgba(255, 255, 255, 0.01);
+        --panel-btn-bg:        rgba(255, 255, 255, 0.04);
+        --panel-btn-border:    rgba(255, 255, 255, 0.08);
+
+        /* Canonical surfaces (cards, inputs, panels — use instead of one-off hexes) */
+        --surface-card:     #0a1628;
+        --surface-elevated: #0f1e30;
+        --surface-border:   rgba(255, 255, 255, 0.08);
+        --surface-muted:    rgba(148, 163, 184, 0.55);
+    }
+
+    /* Theme swaps must be instant. Component hover/focus motion resumes on the
+       next paint; this prevents a full-page transition storm on large views. */
+    html.theme-switching *,
+    html.theme-switching *::before,
+    html.theme-switching *::after {
+        transition: none !important;
+    }
+
+    /* Never transition animations */
+    [class*="animate-"], .transition-none,
+    .animate-spin, .animate-ping, .animate-pulse, .animate-bounce {
+        transition: none !important;
+    }
+
+    body {
+        background-color: var(--bg-page);
+        @apply text-slate-900 antialiased dark:text-slate-100;
+    }
+}
+
+@layer components {
+    .fin-card {
+        @apply rounded-2xl border border-sky-100/80 bg-white p-5 shadow-[0_18px_45px_rgba(14,165,233,0.10)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-none;
+    }
+
+    .fin-button {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 dark:focus:ring-offset-slate-950;
+    }
+
+    .fin-muted-button {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-100 dark:border-slate-700 dark:bg-slate-800 dark:text-sky-300 dark:hover:bg-slate-700;
+    }
+
+    /* ── Theme-aware utility classes (use CSS vars set by admin theme engine) ── */
+
+    .theme-gradient {
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    }
+
+    .theme-gradient-r {
+        background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+    }
+
+    .theme-primary-text {
+        color: var(--color-primary);
+    }
+
+    .theme-primary-bg {
+        background-color: var(--color-primary);
+    }
+
+    .theme-accent-text {
+        color: var(--color-accent);
+    }
+
+    .theme-glow {
+        box-shadow: 0 0 20px color-mix(in srgb, var(--color-glow) calc(var(--glow-intensity) * 100%), transparent);
+    }
+
+    .theme-glow-sm {
+        box-shadow: 0 0 10px color-mix(in srgb, var(--color-glow) calc(var(--glow-intensity) * 60%), transparent);
+    }
+
+    .theme-ring {
+        --tw-ring-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+    }
+
+    .theme-border {
+        border-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+    }
+
+    /* Primary button using theme colors */
+    .btn-theme {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.75rem;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: white;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        box-shadow: 0 4px 15px color-mix(in srgb, var(--color-primary) 25%, transparent);
+        transition: all 0.15s ease;
+        cursor: pointer;
+        border: none;
+    }
+    .btn-theme:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+    }
+    .btn-theme:active {
+        transform: scale(0.97);
+    }
+    .btn-theme:disabled {
+        opacity: 0.6;
+        transform: none;
+        cursor: not-allowed;
+    }
+}
