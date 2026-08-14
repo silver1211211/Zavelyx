@@ -194,6 +194,13 @@ const updateCountrySearch = debounce(v => { debouncedCountrySearch.value = v; },
 
 // ── Mobile sidebar ────────────────────────────────────────────────────────────
 const sidebarOpen = ref(false);
+const isSmallScreen = ref(false);
+const mobileCarrierView = computed(() => isSmallScreen.value && !!selectedCountry.value);
+
+onMounted(() => {
+    isSmallScreen.value = window.matchMedia('(max-width: 1023px)').matches;
+    if (isSmallScreen.value) sidebarOpen.value = true;
+});
 
 // ── Insufficient balance modal ────────────────────────────────────────────────
 const showInsufficientModal = ref(false);
@@ -460,7 +467,7 @@ async function loadServices() {
     allServices.value = seed;
     loadingSvcs.value = false; // have seed data — hide skeleton immediately
 
-    if (!selectedSvc.value) {
+    if (!selectedSvc.value && !isSmallScreen.value) {
         const popular = seed.find(s => getCategory(s.id, s.label) === 'Popular');
         selectService(popular ?? seed[0]); // watch fires → loadCountryStock
     }
@@ -490,7 +497,7 @@ async function loadServices() {
         if (selectedSvc.value) {
             const fresh = list.find(s => s.id === selectedSvc.value.id);
             if (fresh) selectedSvc.value = fresh;
-        } else {
+        } else if (!isSmallScreen.value) {
             const popular = list.find(s => getCategory(s.id, s.label) === 'Popular');
             selectService(popular ?? list[0]);
         }
@@ -587,9 +594,15 @@ function selectCountry(country) {
         buyError.value        = null;
         nextTick(() => {
             const el = document.getElementById('ops-section');
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: isSmallScreen.value ? 'start' : 'nearest' });
         });
     }
+}
+
+function changeCountry() {
+    selectedCountry.value = null;
+    buyError.value = null;
+    nextTick(() => document.getElementById('country-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 }
 
 // ── Buy ───────────────────────────────────────────────────────────────────────
@@ -863,7 +876,7 @@ onMounted(() => { loadServices(); });
                 <template v-if="selectedSvc">
 
                     <!-- ── Service hero card ──────────────────────────────── -->
-                    <div class="relative rounded-2xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#0c1829] p-4 sm:p-5 overflow-hidden">
+                    <div v-if="!mobileCarrierView" class="relative rounded-2xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#0c1829] p-4 sm:p-5 overflow-hidden">
                         <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-[0.07] dark:opacity-[0.12] pointer-events-none"
                             style="background:radial-gradient(circle,#0ea5e9,transparent 70%)" />
                         <div class="relative flex items-center gap-4 flex-wrap">
@@ -916,7 +929,7 @@ onMounted(() => { loadServices(); });
                     </div>
 
                     <!-- ── Country section header ─────────────────────────── -->
-                    <div class="flex items-center gap-3">
+                    <div v-if="!mobileCarrierView" id="country-section" class="flex items-center gap-3">
                         <div class="flex-1 h-px bg-slate-200 dark:bg-white/[0.06]" />
                         <span class="text-[10.5px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600 flex items-center gap-1.5 flex-shrink-0">
                             <Globe class="w-3 h-3" />
@@ -930,7 +943,7 @@ onMounted(() => { loadServices(); });
                     </div>
 
                     <!-- Country search -->
-                    <div v-if="countryStockList.length > 0" class="relative">
+                    <div v-if="!mobileCarrierView && countryStockList.length > 0" class="relative">
                         <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
                         <input
                             :value="countrySearchRaw"
@@ -945,7 +958,7 @@ onMounted(() => { loadServices(); });
                     </div>
 
                     <!-- Countries loading skeleton -->
-                    <div v-if="loadingCountries">
+                    <div v-if="!mobileCarrierView && loadingCountries">
                         <div class="flex items-center gap-2 mb-3">
                             <Loader2 class="w-4 h-4 animate-spin text-sky-500 flex-shrink-0" />
                             <p class="text-[12px] text-slate-400 dark:text-slate-400">Checking availability across regions…</p>
@@ -956,7 +969,7 @@ onMounted(() => { loadServices(); });
                     </div>
 
                     <!-- Countries error -->
-                    <div v-else-if="countriesError"
+                    <div v-else-if="!mobileCarrierView && countriesError"
                         class="rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/[0.05] p-5">
                         <div class="flex items-start gap-3">
                             <AlertCircle class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -978,7 +991,7 @@ onMounted(() => { loadServices(); });
                     </div>
 
                     <!-- No countries -->
-                    <div v-else-if="!loadingCountries && countryStockList.length === 0 && !countriesError"
+                    <div v-else-if="!mobileCarrierView && !loadingCountries && countryStockList.length === 0 && !countriesError"
                         class="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-[#0c1829] p-8 text-center">
                         <Globe class="w-7 h-7 text-slate-300 dark:text-slate-700 mx-auto mb-2" :stroke-width="1.5" />
                         <p class="text-[12.5px] text-slate-400 dark:text-slate-600 mb-2">No country-specific stock found for this service</p>
@@ -989,7 +1002,7 @@ onMounted(() => { loadServices(); });
                     </div>
 
                     <!-- No search results -->
-                    <div v-else-if="!loadingCountries && filteredCountries.length === 0 && countrySearchRaw"
+                    <div v-else-if="!mobileCarrierView && !loadingCountries && filteredCountries.length === 0 && countrySearchRaw"
                         class="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-white dark:bg-[#0c1829] p-8 text-center">
                         <p class="text-[12.5px] text-slate-400 dark:text-slate-600">No results for "{{ countrySearchRaw }}"</p>
                         <button @click="countrySearchRaw=''; debouncedCountrySearch=''"
@@ -997,7 +1010,7 @@ onMounted(() => { loadServices(); });
                     </div>
 
                     <!-- ── Country grid ────────────────────────────────────── -->
-                    <div v-else-if="!loadingCountries && filteredCountries.length > 0"
+                    <div v-else-if="!mobileCarrierView && !loadingCountries && filteredCountries.length > 0"
                         class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
 
                         <button v-for="country in filteredCountries" :key="country.code"
@@ -1082,6 +1095,14 @@ onMounted(() => { loadServices(); });
                         leave-to-class="opacity-0 translate-y-2">
 
                         <div v-if="selectedCountry" id="ops-section">
+
+                            <button v-if="isSmallScreen" type="button" @click="changeCountry"
+                                class="mb-3 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border text-[12px] font-bold
+                                    border-slate-200 dark:border-white/[0.1] bg-white dark:bg-white/[0.04]
+                                    text-slate-600 dark:text-slate-300 active:scale-95 transition-all">
+                                <ChevronRight class="w-3.5 h-3.5 rotate-180" />
+                                Change country
+                            </button>
 
                             <!-- Section label -->
                             <div class="flex items-center gap-3 mb-4">
