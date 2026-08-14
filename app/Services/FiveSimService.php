@@ -200,13 +200,11 @@ class FiveSimService implements NumberProviderContract
     {
         $prices = $this->get('/guest/prices', ['country' => $country], false);
         $countries = $this->getCountries();
-        $catalog = [];
+        $countryPrices = isset($prices[$country]) && is_array($prices[$country])
+            ? $prices[$country]
+            : $prices;
 
-        foreach ($this->flattenPrices([$country => $prices], $countries) as $code => $row) {
-            $catalog[$code] = $row;
-        }
-
-        return $catalog;
+        return $this->flattenPrices([$country => $countryPrices], $countries);
     }
 
     public function getProductsForCountries(array $countries): array

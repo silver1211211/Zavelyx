@@ -168,6 +168,7 @@ class NumberProviderController extends Controller
     public function sync(NumberProvider $numberProvider): JsonResponse
     {
         @set_time_limit(900);
+        $previousMemoryLimit = null;
         $lock = Cache::lock("number_provider_sync_{$numberProvider->id}", 900);
 
         if (!$lock->get()) {
@@ -179,6 +180,13 @@ class NumberProviderController extends Controller
 
         try {
             $driver   = $this->providerService->driver($numberProvider);
+            $effectiveDriver = $this->providerService->effectiveDriver($numberProvider);
+
+            if ($effectiveDriver === 'fivesim') {
+                $previousMemoryLimit = ini_get('memory_limit');
+                ini_set('memory_limit', '512M');
+            }
+
             $products = $driver->getAllProducts();
             $count    = count($products);
 
@@ -198,7 +206,6 @@ class NumberProviderController extends Controller
                 ], 422);
             }
 
-            $effectiveDriver = $this->providerService->effectiveDriver($numberProvider);
             $import = match ($effectiveDriver) {
                 'pvapins' => $this->importPvaPinsProducts($numberProvider, $products),
                 'fivesim' => $this->importFiveSimProducts($numberProvider, $products),
@@ -220,6 +227,11 @@ class NumberProviderController extends Controller
         } catch (\Throwable $e) {
             return response()->json(['ok' => false, 'error' => $this->friendlyError($e->getMessage())], 422);
         } finally {
+            unset($products);
+            gc_collect_cycles();
+            if ($previousMemoryLimit !== null) {
+                ini_set('memory_limit', (string) $previousMemoryLimit);
+            }
             optional($lock)->release();
         }
     }

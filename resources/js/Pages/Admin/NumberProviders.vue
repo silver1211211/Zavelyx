@@ -18,6 +18,19 @@ const DRIVER_LABELS = {
     pvapins: 'PVAPins',
 };
 
+async function readJsonResponse(response) {
+    const body = await response.text();
+    if (!body.trim()) {
+        throw new Error(`Server returned an empty response (HTTP ${response.status}).`);
+    }
+
+    try {
+        return JSON.parse(body);
+    } catch {
+        throw new Error(`Server returned an invalid response (HTTP ${response.status}).`);
+    }
+}
+
 // ── Add/edit form ────────────────────────────────────────────────────────────
 const showForm = ref(false);
 const editing  = ref(null);
@@ -112,10 +125,10 @@ async function testConnection(p) {
                 'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
             },
         }, 20000);
-        const data = await res.json();
+        const data = await readJsonResponse(res);
         testResult.value = { ...testResult.value, [p.id]: data };
-    } catch {
-        testResult.value = { ...testResult.value, [p.id]: { ok: false, error: 'Request failed — check network.' } };
+    } catch (e) {
+        testResult.value = { ...testResult.value, [p.id]: { ok: false, error: e.message || 'Request failed — check network.' } };
     } finally {
         testingId.value = null;
     }
@@ -139,7 +152,7 @@ async function syncProvider(p) {
                 'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
             },
         }, 600000);
-        const data = await res.json();
+        const data = await readJsonResponse(res);
         syncResult.value = { ...syncResult.value, [p.id]: data };
         if (data.ok) router.reload({ only: ['providers'] });
     } catch (e) {
