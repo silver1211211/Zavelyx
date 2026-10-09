@@ -22,6 +22,7 @@ class CurateServices extends Command
     {
         $services = Service::query()
             ->where('type', 'smm')->whereNotNull('provider_id')
+            ->with(['category:id,name', 'provider:id,name'])
             ->withCount(['orders as completed_orders_count' => fn ($q) => $q->where('status', 'completed')])
             ->get();
 
@@ -93,6 +94,18 @@ class CurateServices extends Command
 
     private function platform(Service $service): string
     {
+        $haystack = strtolower($service->name.' '.($service->category?->name ?? ''));
+        $aliases = [
+            'rednote' => ['red note', 'rednote', 'xiaohongshu'],
+            'coinmarketcap' => ['coinmarketcap'],
+            'soundcloud' => ['soundcloud'],
+        ];
+        foreach ($aliases as $platform => $terms) {
+            if (collect($terms)->contains(fn (string $term) => str_contains($haystack, $term))) return $platform;
+        }
+        foreach (['instagram', 'facebook', 'tiktok', 'youtube', 'telegram', 'spotify', 'crypto', 'google', 'twitter', 'twitch', 'website', 'linkedin', 'traffic', 'threads', 'discord', 'seo', 'reddit', 'pinterest', 'whatsapp', 'kwai', 'kick', 'rutube', 'jaco', 'quora'] as $platform) {
+            if (str_contains($haystack, $platform)) return $platform;
+        }
         return strtolower((string) data_get($service->metadata, 'platform', 'other')) ?: 'other';
     }
 
