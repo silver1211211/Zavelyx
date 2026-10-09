@@ -13,7 +13,7 @@ import {
 } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
-    normalizeQuery, groupCategoriesByQuery, servicesInCategory, resolveSelection,
+    normalizeQuery, serviceMatchesQuery, groupCategoriesByQuery, servicesInCategory, resolveSelection,
 } from '@/composables/useServiceCategorySearch';
 
 const props = defineProps({
@@ -159,10 +159,15 @@ const catOpen        = ref(false);
 const svcOpen        = ref(false);
 const searchRaw      = ref('');
 const search         = ref('');
+const searchResultsOpen = ref(false);
 const selected       = ref(null);
 
 const updateSearch = debounce(v => { search.value = v; }, 200);
 const normalizedSearch = computed(() => normalizeQuery(search.value));
+const serviceSearchResults = computed(() => normalizedSearch.value
+    ? activeServices.value.filter(service => serviceMatchesQuery(service, normalizedSearch.value)).slice(0, 100)
+    : []
+);
 const conflictingPlatform = computed(() => {
     if (!normalizedSearch.value || ['all', 'other'].includes(activePlatform.value)) return null;
     const words = ` ${normalizedSearch.value.replace(/[^a-z0-9]+/g, ' ')} `;
@@ -184,7 +189,12 @@ const categoryServices = computed(() =>
 );
 
 function autoSelectFirst() {
-    const { category, service } = resolveSelection({ services: activeServices.value, query: normalizedSearch.value });
+    const { category, service } = resolveSelection({
+        services: activeServices.value,
+        query: normalizedSearch.value,
+        currentCategoryId: activeCat.value?.id ?? null,
+        currentServiceId: selected.value?.id ?? null,
+    });
     activeCat.value = category;
     if (service?.id) {
         selected.value  = service;
@@ -308,6 +318,19 @@ function selectService(svc) {
     svcOpen.value   = false;
 }
 
+function selectSearchResult(svc) {
+    activeCat.value = svc.category
+        ? { ...svc.category, id: svc.category_id ?? svc.category.id }
+        : { id: svc.category_id ?? 0, name: 'Other' };
+    selected.value = svc;
+    form.service_id = svc.id;
+    form.quantity = parseInt(svc.min_amount ?? 100, 10);
+    form.link = '';
+    catOpen.value = false;
+    svcOpen.value = false;
+    searchResultsOpen.value = false;
+}
+
 // When the query changes, keep the current category/service if they still
 // match; otherwise jump to the first match, or clear selection entirely if
 // nothing matches ("No services found"). This is the piece that was
@@ -316,6 +339,7 @@ function selectService(svc) {
 watch(normalizedSearch, (q) => {
     catOpen.value = false;
     svcOpen.value = false;
+    searchResultsOpen.value = !!q;
     searchServices(q);
 });
 
@@ -324,6 +348,7 @@ watch(activePlatform, (platform) => {
     selected.value  = null;
     searchRaw.value = '';
     search.value    = '';
+    searchResultsOpen.value = false;
     catOpen.value   = false;
     svcOpen.value   = false;
     form.service_id = null;
@@ -710,13 +735,16 @@ const SMS_SERVICES = [
             <div class="p-4 sm:p-5 space-y-4">
 
                 <!-- Search -->
-                <div class="relative">
+                <div class="relative z-40">
+                    <div v-if="searchResultsOpen && normalizedSearch" class="fixed inset-0 z-30" @click="searchResultsOpen = false" />
                     <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-[17px] h-[17px] text-slate-400 dark:text-slate-400 pointer-events-none" />
                     <input
                         :value="searchRaw"
-                        @input="e => { searchRaw = e.target.value; updateSearch(e.target.value); }"
-                        type="search" placeholder="Search services or categories…"
+                        @focus="searchResultsOpen = !!normalizedSearch"
+                        @input="e => { searchRaw = e.target.value; searchResultsOpen = !!e.target.value.trim(); updateSearch(e.target.value); }"
+                        type="search" placeholder="Search services…"
                         class="w-full pl-11 pr-10 text-[13.5px] rounded-2xl border transition-all
+                            relative z-40
                             bg-slate-50 dark:bg-[#0d1f35]
                             text-slate-800 dark:text-slate-100
                             placeholder:text-slate-400 dark:placeholder:text-slate-600
@@ -724,12 +752,31 @@ const SMS_SERVICES = [
                             focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-400 dark:focus:border-sky-500/30
                             hover:border-slate-300 dark:hover:border-white/[0.12]"
                         style="height: 48px" />
-                    <button v-if="searchRaw" @click="searchRaw = ''; search = ''"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-lg
+                    <button v-if="searchRaw" @click="searchRaw = ''; search = ''; searchResultsOpen = false"
+                        class="absolute z-40 right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-lg
                             text-slate-400 hover:text-slate-700 dark:hover:text-white
                             hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors">
                         <X class="w-3.5 h-3.5" />
                     </button>
+
+                    <div v-if="searchResultsOpen && normalizedSearch"
+                        class="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-2xl overflow-hidden bg-white dark:bg-[#0b1d30] border border-slate-200 dark:border-white/[0.09] shadow-2xl shadow-black/15 dark:shadow-black/70">
+                        <div v-if="loadingServices" class="flex items-center justify-center gap-2 px-4 py-5 text-[12px] text-slate-400">
+                            <Loader2 class="w-4 h-4 animate-spin text-sky-500" /> Searching services…
+                        </div>
+                        <div v-else class="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-white/[0.04]">
+                            <button v-for="svc in serviceSearchResults" :key="svc.id" @click="selectSearchResult(svc)"
+                                class="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-sky-50 dark:hover:bg-sky-500/[0.08] transition-colors">
+                                <span class="mt-0.5 shrink-0 text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-sky-100 dark:bg-sky-500/15 text-sky-600 dark:text-sky-400">{{ svc.id }}</span>
+                                <span class="flex-1 min-w-0">
+                                    <span class="block text-[12.5px] font-semibold text-slate-800 dark:text-slate-200 leading-snug">{{ svc.name }}</span>
+                                    <span class="block mt-1 text-[10.5px] text-slate-400 truncate">{{ svc.category?.name ?? 'Other' }}</span>
+                                </span>
+                                <span class="shrink-0 text-[10.5px] font-bold text-emerald-600 dark:text-emerald-400">{{ formatMoney(svc.selling_price) }}/1K</span>
+                            </button>
+                            <div v-if="!serviceSearchResults.length" class="px-4 py-5 text-[12.5px] text-slate-400 text-center">No services found</div>
+                        </div>
+                    </div>
                 </div>
                 <p v-if="conflictingPlatform" class="-mt-2 flex items-center gap-1.5 text-[11.5px] font-medium text-amber-600 dark:text-amber-400">
                     <AlertCircle class="h-3.5 w-3.5 flex-shrink-0" />

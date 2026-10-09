@@ -11,13 +11,13 @@ export function serviceMatchesQuery(service, query) {
     const normalized = normalizeQuery(query);
     if (!normalized) return true;
     const name = String(service?.name ?? '').toLowerCase();
-    const categoryName = String(service?.category?.name ?? '').toLowerCase();
-    const searchableText = `${name} ${categoryName}`;
+    const id = String(service?.id ?? '');
+    const searchableText = `${id} ${name}`;
     return normalized.split(/\s+/).every(term => searchableText.includes(term));
 }
 
 // Categories present among `services`, restricted to those with at least
-// one service matching `query` (by service name or category name).
+// one service matching `query` by service ID or service name.
 export function groupCategoriesByQuery(services, query = '') {
     const map = new Map();
     for (const s of services) {

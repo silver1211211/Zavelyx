@@ -200,10 +200,7 @@ class OrderController extends Controller
                     foreach ($terms as $term) {
                         $like = '%'.addcslashes($term, '%_\\').'%';
                         $query->where(function (Builder $q) use ($like, $term): void {
-                            $q->whereRaw("LOWER(services.name) LIKE ? ESCAPE '\\\\'", [$like])
-                              ->orWhereHas('category', fn (Builder $cat) =>
-                                  $cat->whereRaw("LOWER(name) LIKE ? ESCAPE '\\\\'", [$like])
-                              );
+                            $q->whereRaw("LOWER(services.name) LIKE ? ESCAPE '\\\\'", [$like]);
 
                             if (ctype_digit($term)) {
                                 $q->orWhere('services.id', (int) $term);
@@ -214,18 +211,25 @@ class OrderController extends Controller
 
                 return $query
                     ->get(['id', 'category_id', 'name', 'selling_price', 'min_amount', 'max_amount', 'metadata'])
-                    ->map(fn ($s) => [
-                        'id'            => $s->id,
-                        'name'          => $s->name,
-                        'category_id'   => $s->category_id,
-                        'category'      => $s->category
-                            ? ['id' => $s->category->id, 'name' => $s->category->name]
-                            : null,
-                        'selling_price' => (float) $s->selling_price,
-                        'min_amount'    => (int) ($s->min_amount ?? 1),
-                        'max_amount'    => (int) ($s->max_amount ?? 1_000_000),
-                        'metadata'      => is_array($s->metadata) ? $s->metadata : [],
-                    ])
+                    ->map(function ($s): array {
+                        $metadata = is_array($s->metadata) ? $s->metadata : [];
+                        if (isset($metadata['description'])) {
+                            $metadata['description'] = html_entity_decode((string) $metadata['description'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                        }
+
+                        return [
+                            'id'            => $s->id,
+                            'name'          => html_entity_decode((string) $s->name, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                            'category_id'   => $s->category_id,
+                            'category'      => $s->category
+                                ? ['id' => $s->category->id, 'name' => html_entity_decode((string) $s->category->name, ENT_QUOTES | ENT_HTML5, 'UTF-8')]
+                                : null,
+                            'selling_price' => (float) $s->selling_price,
+                            'min_amount'    => (int) ($s->min_amount ?? 1),
+                            'max_amount'    => (int) ($s->max_amount ?? 1_000_000),
+                            'metadata'      => $metadata,
+                        ];
+                    })
                     ->values();
             }
         );

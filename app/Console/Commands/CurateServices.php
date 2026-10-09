@@ -9,6 +9,7 @@ use Illuminate\Console\Command;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class CurateServices extends Command
 {
@@ -16,10 +17,34 @@ class CurateServices extends Command
     protected $description = 'Select a concise, provider-balanced customer SMM catalog';
 
     private const MAJOR = ['instagram', 'facebook', 'tiktok', 'youtube', 'telegram'];
-    private const REJECT = ['test', 'testing', 'disabled', 'unavailable', 'do not order', 'maintenance', 'separator'];
+    private const REJECT = [
+        'test', 'testing', 'disabled', 'unavailable', 'do not order', 'maintenance', 'separator',
+        'provider', 'scrape', 'impossible', 'updateing', 'updating', 'own provided',
+    ];
+    private const SERVICE_KINDS = [
+        'followers' => ['followers', 'follower'],
+        'likes' => ['likes', 'like', 'dislikes'],
+        'views' => ['views', 'view'],
+        'comments' => ['comments', 'comment'],
+        'reactions' => ['reactions', 'reaction'],
+        'members' => ['members', 'member'],
+        'subscribers' => ['subscribers', 'subscriber'],
+        'plays' => ['plays', 'play', 'streams', 'stream', 'listeners', 'listener'],
+        'shares' => ['shares', 'share'],
+        'saves' => ['saves', 'save'],
+        'reach' => ['reach', 'impressions', 'impression'],
+        'watch-hours' => ['watch hours', 'watch time'],
+        'stories' => ['story', 'stories'],
+        'live' => ['live stream', 'livestream'],
+        'votes' => ['poll votes', 'votes'],
+        'reposts' => ['reposts', 'repost', 'retweets', 'retweet'],
+        'traffic' => ['traffic', 'visitors', 'website visits'],
+    ];
 
     public function handle(SmmProviderService $smm): int
     {
+        ini_set('memory_limit', '512M');
+
         $services = Service::query()
             ->where('type', 'smm')->whereNotNull('provider_id')
             ->with(['category:id,name', 'provider:id,name'])
@@ -27,12 +52,34 @@ class CurateServices extends Command
             ->get();
 
         $eligible = $services->filter(fn (Service $service) => $this->eligible($service));
-        $selected = collect();
+        $selectedCategoryIds = $eligible
+            ->filter(fn (Service $service) => data_get($service->metadata, 'catalog_approved') === true)
+            ->pluck('category_id');
 
+        // Keep every configured provider represented on each platform where it
+        // has a valid offering, even when another provider has a lower price.
         foreach ($eligible->groupBy(fn (Service $service) => $service->provider_id.'|'.$this->platform($service)) as $group) {
-            $platform = $this->platform($group->first());
-            $limit = in_array($platform, self::MAJOR, true) ? 6 : 2;
-            $selected->push(...$group->sortByDesc(fn (Service $service) => $this->score($service))->take($limit));
+            $best = $group->sortByDesc(fn (Service $service) => $this->score($service))->first();
+            if ($best) $selectedCategoryIds->push($best->category_id);
+        }
+
+        // Add the strongest real provider category for every service type on
+        // every platform. This fills important gaps (for example Telegram
+        // reactions) without exposing the provider's entire 20k-service feed.
+        foreach ($eligible->groupBy(fn (Service $service) => $this->platform($service).'|'.$this->serviceKind($service)) as $key => $group) {
+            if (str_ends_with((string) $key, '|other')) continue;
+            $bestCategory = $group->groupBy('category_id')
+                ->sortByDesc(fn (Collection $items) => $items->max(fn (Service $service) => $this->score($service)))
+                ->keys()->first();
+            if ($bestCategory !== null) $selectedCategoryIds->push($bestCategory);
+        }
+
+        $selectedCategoryIds = $selectedCategoryIds->filter()->unique();
+        $selected = collect();
+        foreach ($eligible->whereIn('category_id', $selectedCategoryIds)->groupBy('category_id') as $group) {
+            // Two or three useful choices per displayed category, where the
+            // provider has that many valid services.
+            $selected->push(...$group->sortByDesc(fn (Service $service) => $this->score($service))->take(3));
         }
 
         // Never hide a valid service that has already completed real customer orders.
@@ -44,18 +91,27 @@ class CurateServices extends Command
             ->values()->all());
 
         if (! $this->option('dry-run')) {
+            $previouslyApproved = Service::query()->where('type', 'smm')
+                ->where('metadata->catalog_approved', true)->pluck('id')->values()->all();
+            $backupPath = 'backups/service-catalog-'.now()->format('Ymd-His').'.json';
+            Storage::disk('local')->put($backupPath, json_encode([
+                'created_at' => now()->toISOString(),
+                'service_ids' => $previouslyApproved,
+            ], JSON_PRETTY_PRINT));
+
             DB::table('services')->where('type', 'smm')->whereNotNull('provider_id')
                 ->update(['metadata' => DB::raw("JSON_SET(COALESCE(metadata, JSON_OBJECT()), '$.catalog_approved', false)")]);
             DB::table('services')->whereIn('id', $selected->pluck('id'))
                 ->update(['metadata' => DB::raw("JSON_SET(COALESCE(metadata, JSON_OBJECT()), '$.catalog_approved', true)")]);
             $smm->clearUserServiceCaches();
+            $this->line('Previous catalogue backup: storage/app/private/'.$backupPath);
         }
 
         $chosenPlatforms = [];
         foreach ($selected as $service) {
             $chosenPlatforms[$this->platform($service)] = true;
         }
-        $this->info('Selected '.$selected->count().' services across '.count($chosenPlatforms).' platforms.');
+        $this->info('Selected '.$selected->count().' services in '.$selected->pluck('category_id')->unique()->count().' categories across '.count($chosenPlatforms).' platforms.');
         if (! $this->option('dry-run')) {
             $approved = Service::available()->where('type', 'smm');
             $approvedCount = (clone $approved)->count();
@@ -84,12 +140,22 @@ class CurateServices extends Command
 
     private function eligible(Service $service): bool
     {
-        $name = strtolower($service->name);
+        $name = strtolower($service->name.' '.($service->category?->name ?? ''));
         return $service->is_active
             && (float) $service->selling_price > 0
             && (float) $service->min_amount > 0
             && (float) $service->max_amount >= (float) $service->min_amount
+            && trim((string) data_get($service->metadata, 'description')) !== ''
             && ! collect(self::REJECT)->contains(fn (string $term) => str_contains($name, $term));
+    }
+
+    private function serviceKind(Service $service): string
+    {
+        $haystack = strtolower($service->name.' '.($service->category?->name ?? ''));
+        foreach (self::SERVICE_KINDS as $kind => $terms) {
+            if (collect($terms)->contains(fn (string $term) => str_contains($haystack, $term))) return $kind;
+        }
+        return 'other';
     }
 
     private function platform(Service $service): string
@@ -113,6 +179,7 @@ class CurateServices extends Command
     {
         $metadata = $service->metadata ?? [];
         return ($service->completed_orders_count * 1000000)
+            + (data_get($metadata, 'catalog_approved') === true ? 100000 : 0)
             + (! empty($metadata['description']) ? 10000 : 0)
             + (! empty($metadata['refill']) ? 500 : 0)
             + (! empty($metadata['cancel']) ? 250 : 0)
