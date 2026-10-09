@@ -19,6 +19,7 @@ import {
     Code2,
 } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
+import BrandLogo from '@/Components/BrandLogo.vue';
 
 const siteSettings = computed(() => usePage().props.site_settings ?? {});
 const authLogoUrl  = computed(() => siteSettings.value.logo_auth || siteSettings.value.logo_url || '');
@@ -126,18 +127,7 @@ const strengthTextColor = computed(() => {
         <header class="absolute inset-x-0 top-0 z-20">
             <div class="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-5 sm:px-8">
                 <Link href="/" class="group flex items-center gap-3">
-                    <img v-if="authLogoUrl" :src="authLogoUrl" alt="Logo" class="h-9 max-w-[140px] object-contain" />
-                    <template v-else>
-                        <div class="relative">
-                            <div class="absolute inset-0 rounded-xl blur-md transition-all group-hover:blur-lg"
-                                style="background: color-mix(in srgb, var(--color-primary) 30%, transparent)"></div>
-                            <div class="relative flex h-9 w-9 items-center justify-center rounded-xl shadow-lg"
-                                style="background: linear-gradient(135deg, var(--color-primary), var(--color-secondary))">
-                                <Zap class="h-4 w-4 text-white" />
-                            </div>
-                        </div>
-                        <span class="text-base font-black tracking-tight text-slate-900 dark:text-white">{{ siteSettings.name || 'Zavelyx' }}</span>
-                    </template>
+                    <BrandLogo :custom-url="authLogoUrl" class="h-9 w-[150px]" />
                 </Link>
 
                 <button

@@ -67,9 +67,16 @@ const LOGO_SLOTS = [
 ];
 
 // Per-slot state
-const brandingPreviews = ref(
-    Object.fromEntries(LOGO_SLOTS.map(s => [s.type, props.branding?.[s.type === 'favicon' ? 'favicon' : `logo_${s.type}`] ?? '']))
-);
+const configuredBranding = ref(Object.fromEntries(
+    LOGO_SLOTS.map(s => [s.type, props.branding?.[s.type === 'favicon' ? 'favicon' : `logo_${s.type}`] ?? ''])
+));
+const officialBranding = Object.fromEntries(LOGO_SLOTS.map(s => [
+    s.type,
+    s.type === 'favicon' ? '/branding/zavelyx-symbol.png?v=20261009' : '/branding/zavelyx-logo-light.png?v=20261009',
+]));
+const brandingPreviews = ref(Object.fromEntries(
+    LOGO_SLOTS.map(s => [s.type, configuredBranding.value[s.type] || officialBranding[s.type]])
+));
 const brandingFiles    = ref(Object.fromEntries(LOGO_SLOTS.map(s => [s.type, null])));
 const brandingForms    = Object.fromEntries(
     LOGO_SLOTS.map(s => [s.type, useForm({ [s.field]: null })])
@@ -89,6 +96,7 @@ function uploadBranding(slot) {
     brandingForms[slot.type].post(route('admin.settings.general.upload-branding', { type: slot.type }), {
         forceFormData: true,
         onSuccess: () => {
+            configuredBranding.value[slot.type] = brandingPreviews.value[slot.type];
             brandingFiles.value[slot.type]       = null;
             brandingForms[slot.type][slot.field] = null;
         },
@@ -99,7 +107,8 @@ function deleteBranding(type) {
     deletingType.value = type;
     router.delete(route('admin.settings.general.delete-branding', { type }), {
         onSuccess: () => {
-            brandingPreviews.value[type] = '';
+            configuredBranding.value[type] = '';
+            brandingPreviews.value[type] = officialBranding[type];
             brandingFiles.value[type]   = null;
             deletingType.value          = null;
         },
@@ -309,7 +318,7 @@ const timezones = [
                             </button>
 
                             <!-- Delete -->
-                            <button v-if="brandingPreviews[slot.type] && !brandingFiles[slot.type]"
+                            <button v-if="configuredBranding[slot.type] && !brandingFiles[slot.type]"
                                 type="button"
                                 @click="deleteBranding(slot.type)"
                                 :disabled="deletingType === slot.type"

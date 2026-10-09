@@ -24,6 +24,7 @@ import {
 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { getStoredTheme, setThemeInstant } from '@/utils/theme';
+import BrandLogo from '@/Components/BrandLogo.vue';
 
 const props = defineProps({ canLogin: Boolean, canRegister: Boolean, contactLink: String });
 
@@ -337,19 +338,7 @@ onBeforeUnmount(() => {
 
                 <!-- Logo -->
                 <Link href="/" class="group flex items-center gap-3 flex-shrink-0">
-                    <img v-if="siteSettings.logo_url" :src="siteSettings.logo_url" alt="Logo"
-                        class="h-9 max-w-[140px] object-contain" />
-                    <template v-else>
-                        <div class="relative">
-                            <div class="absolute inset-0 rounded-xl blur-md transition-all duration-300 group-hover:blur-lg"
-                                style="background: color-mix(in srgb, var(--color-primary) 35%, transparent)"></div>
-                            <div class="relative flex h-9 w-9 items-center justify-center rounded-xl shadow-lg"
-                                style="background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); box-shadow: 0 4px 16px color-mix(in srgb, var(--color-primary) 30%, transparent)">
-                                <Zap class="h-4 w-4 text-white" />
-                            </div>
-                        </div>
-                        <span class="text-base font-black tracking-tight">{{ siteSettings.name || 'Zavelyx' }}</span>
-                    </template>
+                    <BrandLogo :custom-url="siteSettings.logo_url" class="h-10 w-[168px]" />
                 </Link>
 
                 <!-- Desktop nav links -->
@@ -973,19 +962,7 @@ onBeforeUnmount(() => {
                 <div class="grid grid-cols-2 gap-10 lg:grid-cols-4 mb-12">
                     <div class="col-span-2 lg:col-span-1">
                         <div class="flex items-center gap-3 mb-4">
-                            <img v-if="siteSettings.logo_footer || siteSettings.logo_url"
-                                :src="siteSettings.logo_footer || siteSettings.logo_url"
-                                alt="Logo" class="h-9 max-w-[140px] object-contain" />
-                            <template v-else>
-                                <div class="relative">
-                                    <div class="absolute inset-0 rounded-xl blur-md" style="background: color-mix(in srgb, var(--color-primary) 30%, transparent)"></div>
-                                    <div class="relative flex h-9 w-9 items-center justify-center rounded-xl shadow-lg"
-                                        style="background: linear-gradient(135deg, var(--color-primary), var(--color-secondary))">
-                                        <Zap class="h-4 w-4 text-white" />
-                                    </div>
-                                </div>
-                                <span class="text-base font-black">{{ siteSettings.name || 'Zavelyx' }}</span>
-                            </template>
+                            <BrandLogo :custom-url="siteSettings.logo_footer || siteSettings.logo_url" class="h-10 w-[168px]" />
                         </div>
                         <p class="text-sm text-slate-500 dark:text-slate-400 leading-7 max-w-[210px]">Global SMS, OTP &amp; virtual number infrastructure for individuals and enterprises.</p>
                     </div>

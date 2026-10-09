@@ -3,6 +3,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { getPreferredTheme, setThemeInstant } from '@/utils/theme';
 import { Eye, EyeOff, Loader2, Moon, Shield, Sun, Zap } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
+import BrandLogo from '@/Components/BrandLogo.vue';
 
 const isDark = ref(false);
 const showPassword = ref(false);
@@ -46,15 +47,7 @@ onMounted(() => {
 
             <!-- Logo -->
             <div class="flex flex-col items-center mb-8">
-                <div class="relative mb-4">
-                    <div class="absolute inset-0 bg-sky-500/20 rounded-2xl blur-xl" />
-                    <div class="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-xl shadow-sky-500/30">
-                        <Zap class="w-7 h-7 text-white" :stroke-width="2.5" />
-                    </div>
-                </div>
-                <h1 class="text-[22px] font-black tracking-tight text-slate-900 dark:text-white">
-                    Zave<span class="text-sky-500">lyx</span>
-                </h1>
+                <BrandLogo class="mb-4 h-14 w-[220px]" />
                 <div class="flex items-center gap-1.5 mt-1">
                     <Shield class="w-3 h-3 text-slate-400 dark:text-slate-600" />
                     <p class="text-[12px] font-medium text-slate-400 dark:text-slate-600 uppercase tracking-widest">Admin Panel</p>

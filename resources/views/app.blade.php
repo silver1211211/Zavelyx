@@ -38,7 +38,8 @@
             // Branding: normalize to root-relative URL
             $faviconRaw = \App\Models\Setting::get('site.favicon', '')
                        ?: \App\Models\Setting::get('site.favicon_url', '');
-            $faviconUrl = '';
+            $hasCustomFavicon = (bool) $faviconRaw;
+            $faviconUrl = '/branding/favicon.ico?v=20261009';
             if ($faviconRaw) {
                 $faviconUrl = str_starts_with($faviconRaw, 'http')
                     ? (parse_url($faviconRaw, PHP_URL_PATH) ?? '')
@@ -59,11 +60,15 @@
         <title inertia>{{ config('app.name', $siteName) }}</title>
 
         <!-- Favicon -->
-        @if($faviconUrl)
         <link rel="icon" type="image/x-icon" href="{{ $faviconUrl }}">
-        <link rel="shortcut icon" href="{{ $faviconUrl }}">
+        @unless($hasCustomFavicon)
+        <link rel="icon" type="image/png" sizes="16x16" href="/branding/favicon-16x16.png?v=20261009">
+        <link rel="icon" type="image/png" sizes="32x32" href="/branding/favicon-32x32.png?v=20261009">
+        <link rel="apple-touch-icon" sizes="180x180" href="/branding/apple-touch-icon.png?v=20261009">
+        @else
         <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
-        @endif
+        @endunless
+        <link rel="shortcut icon" href="{{ $faviconUrl }}">
 
         <!-- CSS Theme Variables -->
         <style>

@@ -1,5 +1,6 @@
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3';
+import BrandLogo from '@/Components/BrandLogo.vue';
 import { getPreferredTheme, setThemeInstant } from '@/utils/theme';
 import {
     ArrowUpDown,
@@ -147,22 +148,10 @@ onMounted(() => {
         >
             <!-- Logo -->
             <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-200 dark:border-sky-500/10 flex-shrink-0">
-                <!-- Custom logo image -->
-                <img v-if="adminLogoUrl" :src="adminLogoUrl" alt="Logo"
-                    class="h-8 max-w-[120px] object-contain flex-shrink-0" />
-                <!-- Default icon+wordmark -->
-                <template v-else>
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center shadow-lg flex-shrink-0"
-                        style="background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 40%, transparent)">
-                        <Zap class="w-3.5 h-3.5 text-white" :stroke-width="2.5" />
-                    </div>
-                    <div>
-                        <p class="text-[13px] font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
-                            {{ siteSettings.name || 'Zavelyx' }}
-                        </p>
-                        <p class="text-[9px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-600 leading-tight">Admin Panel</p>
-                    </div>
-                </template>
+                <div class="min-w-0">
+                    <BrandLogo :custom-url="adminLogoUrl" class="h-7 w-[128px]" />
+                    <p class="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-600 leading-tight">Admin Panel</p>
+                </div>
                 <button class="ml-auto lg:hidden p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors" @click="sidebarOpen = false">
                     <X class="w-4 h-4" />
                 </button>

@@ -3,6 +3,7 @@ import ToastNotifications from '@/Components/ToastNotifications.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import { useToast } from '@/composables/useToast';
 import { getStoredTheme, setThemeInstant } from '@/utils/theme';
+import BrandLogo from '@/Components/BrandLogo.vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     ArrowUpDown, Bell, BellDot, Check, CheckCheck,
@@ -285,19 +286,8 @@ const userLevel = computed(() => authUser.value?.account_level ?? 'basic');
             <div :class="['h-[60px] flex items-center flex-shrink-0 border-b relative z-10 transition-all duration-300', sidebarCollapsed ? 'justify-center px-0' : 'justify-between px-4']"
                 :style="{ borderColor: 'var(--sb-border)' }">
                 <Link :href="route('dashboard')" :class="['flex items-center gap-2.5 group min-w-0', sidebarCollapsed ? 'justify-center' : '']" @click="closeSidebar">
-                    <!-- Custom logo image -->
-                    <img v-if="dashLogoUrl" :src="dashLogoUrl" alt="Logo"
-                        :class="['object-contain flex-shrink-0 transition-all duration-200', sidebarCollapsed ? 'h-8 w-8' : 'h-8 max-w-[120px]']" />
-                    <!-- Default icon + wordmark -->
-                    <template v-else>
-                        <div class="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0 transition-all duration-200 group-hover:shadow-[0_0_20px_rgba(14,165,233,0.5)]"
-                            style="background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); box-shadow: 0 4px 16px color-mix(in srgb, var(--color-primary) 30%, transparent)">
-                            <Zap class="w-4 h-4 text-white" :stroke-width="2.5" />
-                        </div>
-                        <span v-if="!sidebarCollapsed" class="text-[15px] font-black tracking-tight truncate" :class="isDark ? 'text-white' : 'text-slate-800'">
-                            {{ siteSettings.name || 'Zavelyx' }}
-                        </span>
-                    </template>
+                    <BrandLogo :custom-url="dashLogoUrl" :icon-only="sidebarCollapsed"
+                        :class="sidebarCollapsed ? 'h-9 w-9' : 'h-8 w-[132px]'" />
                 </Link>
                 <button v-if="!sidebarCollapsed" class="lg:hidden w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.07] active:scale-90 transition-all" @click="closeSidebar">
                     <X class="w-4 h-4" />

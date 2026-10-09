@@ -6,6 +6,9 @@
     <title>{{ $code }} {{ $title }} — {{ config('app.name', 'Zavelyx') }}</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/branding/favicon.ico?v=20261009">
+    <link rel="icon" type="image/png" sizes="32x32" href="/branding/favicon-32x32.png?v=20261009">
+    <link rel="apple-touch-icon" sizes="180x180" href="/branding/apple-touch-icon.png?v=20261009">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -66,27 +69,7 @@
             text-decoration: none;
         }
 
-        .brand-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--sky), var(--cyan));
-            box-shadow: 0 0 8px rgba(14,165,233,.6);
-        }
-
-        .brand-name {
-            font-size: .9rem;
-            font-weight: 800;
-            letter-spacing: -.02em;
-            color: var(--text);
-        }
-
-        .brand-name span {
-            background: linear-gradient(90deg, var(--sky), var(--cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+        .brand img { display: block; width: 132px; height: 32px; object-fit: contain; }
 
         .nav-links { display: flex; align-items: center; gap: .75rem; }
 
@@ -291,8 +274,7 @@
     <!-- Nav -->
     <nav>
         <a href="/" class="brand">
-            <span class="brand-dot"></span>
-            <span class="brand-name">Nexa<span>Hub</span></span>
+            <img src="/branding/zavelyx-logo-dark.png?v=20261009" alt="Zavelyx">
         </a>
         <div class="nav-links">
             <a href="javascript:history.back()" class="nav-link">← Back</a>
