@@ -20,6 +20,7 @@ const polling    = ref(false);
 const pollError  = ref(false);
 const copiedAddr = ref(false);
 const copiedMemo = ref(false);
+const copiedAmount = ref(false);
 const qrDataUrl  = ref('');
 const imgError   = ref(false);
 let   pollTimer  = null;
@@ -101,6 +102,13 @@ async function copyMemo() {
         await navigator.clipboard.writeText(String(current.value.memo ?? ''));
         copiedMemo.value = true;
         setTimeout(() => { copiedMemo.value = false; }, 2000);
+    } catch {}
+}
+async function copyAmount() {
+    try {
+        await navigator.clipboard.writeText(fmtAmount(current.value.pay_amount));
+        copiedAmount.value = true;
+        setTimeout(() => { copiedAmount.value = false; }, 2000);
     } catch {}
 }
 
@@ -273,6 +281,17 @@ function fmtUsd(v)    { return Number(v || 0).toFixed(2); }
                                     {{ fmtAmount(current.pay_amount) }}
                                 </span>
                                 <span class="text-[15px] font-black text-sky-500 uppercase">{{ current.pay_currency }}</span>
+                                <button type="button" @click="copyAmount"
+                                    :aria-label="copiedAmount ? 'Amount copied' : 'Copy exact payment amount'"
+                                    :title="copiedAmount ? 'Amount copied' : 'Copy amount'"
+                                    :class="['ml-1 inline-flex items-center gap-1 self-center px-2 py-1 rounded-lg text-[10px] font-bold transition-all',
+                                        copiedAmount
+                                            ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                                            : 'bg-slate-100 dark:bg-white/[0.08] text-slate-500 hover:text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-500/10']">
+                                    <CheckCircle2 v-if="copiedAmount" class="w-3.5 h-3.5" />
+                                    <Copy v-else class="w-3.5 h-3.5" />
+                                    {{ copiedAmount ? 'Copied' : 'Copy' }}
+                                </button>
                             </div>
                             <p class="text-[12px] text-slate-400 mt-0.5">≈ ${{ fmtUsd(current.price_amount) }} USD</p>
                         </div>

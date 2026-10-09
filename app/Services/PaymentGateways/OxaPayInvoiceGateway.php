@@ -4,31 +4,96 @@ namespace App\Services\PaymentGateways;
 
 use App\Models\PaymentGateway;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class OxaPayInvoiceGateway extends OxaPayGateway
 {
-    // Display labels + internal IDs for the coin selector.
-    private const CURRENCIES = [
-        ['label' => 'USDT BEP20',   'value' => 'USDT_BEP20', 'enabled' => true],
-        ['label' => 'USDT TRC20',   'value' => 'USDT_TRC20', 'enabled' => false],
-        ['label' => 'Ethereum',     'value' => 'ETH',        'enabled' => false],
-        ['label' => 'Bitcoin',      'value' => 'BTC',        'enabled' => false],
-        ['label' => 'Polygon USDT', 'value' => 'USDT_POLYGON','enabled' => false],
+    // Safe fallback used only when OxaPay's currency catalogue is temporarily unavailable.
+    private const FALLBACK_CURRENCIES = [
+        ['label' => 'USDT BEP20',   'value' => 'USDT_BEP20', 'pay_currency' => 'USDT', 'network' => 'BEP20', 'enabled' => true],
+        ['label' => 'USDT TRC20',   'value' => 'USDT_TRC20', 'pay_currency' => 'USDT', 'network' => 'TRC20', 'enabled' => true],
+        ['label' => 'Ethereum',     'value' => 'ETH_ERC20',  'pay_currency' => 'ETH',  'network' => 'ERC20', 'enabled' => true],
+        ['label' => 'Bitcoin',      'value' => 'BTC_BITCOIN','pay_currency' => 'BTC',  'network' => 'Bitcoin', 'enabled' => true],
+        ['label' => 'Polygon USDT', 'value' => 'USDT_POLYGON','pay_currency' => 'USDT','network' => 'Polygon', 'enabled' => true],
     ];
 
     // Maps internal currency IDs to OxaPay white-label API params.
     // network: null means the field should be omitted from the request.
-    private const CURRENCY_PARAMS = [
-        'USDT_BEP20' => ['pay_currency' => 'USDT', 'network' => 'BEP20'],
-    ];
-
     public function getDriver(): string { return 'oxapay_invoice'; }
 
     public function getAcceptedCoins(): array
     {
-        return self::CURRENCIES;
+        return Cache::remember("oxapay:accepted-coins:{$this->gateway->id}", now()->addHour(), function (): array {
+            try {
+                $common = Http::timeout(15)->get(self::API . '/v1/common/currencies')->json('data', []);
+                $prices = Http::timeout(15)->get(self::API . '/v1/common/prices')->json('data', []);
+                $acceptedResponse = Http::withHeaders([
+                    'merchant_api_key' => $this->apiKey,
+                    'Content-Type' => 'application/json',
+                ])->timeout(15)->get(self::API . '/v1/payment/accepted-currencies');
+
+                $accepted = $this->acceptedSymbols($acceptedResponse->json('data', []));
+                $coins = [];
+
+                foreach ($common as $symbol => $currency) {
+                    $symbol = strtoupper((string) $symbol);
+                    if (($currency['status'] ?? true) === false || ($accepted && !in_array($symbol, $accepted, true))) {
+                        continue;
+                    }
+
+                    foreach (($currency['networks'] ?? []) as $networkKey => $network) {
+                        $networkName = (string) ($network['network'] ?? $networkKey);
+                        $apiNetwork = $this->preferredNetworkKey($networkName, $network['keys'] ?? []);
+                        $minimumCrypto = isset($network['deposit_min']) ? (float) $network['deposit_min'] : null;
+                        $minimumUsd = $minimumCrypto && isset($prices[$symbol])
+                            ? max(1, ceil($minimumCrypto * (float) $prices[$symbol] * 100) / 100)
+                            : 1;
+                        $coins[] = [
+                            'label' => ($currency['name'] ?? $symbol) . ' · ' . ($network['name'] ?? $networkName),
+                            'currency_name' => $currency['name'] ?? $symbol,
+                            'value' => $symbol . '_' . strtoupper(preg_replace('/[^A-Za-z0-9]+/', '_', $apiNetwork)),
+                            'pay_currency' => $symbol,
+                            'network' => $apiNetwork,
+                            'network_name' => $network['name'] ?? $networkName,
+                            'min_amount' => $minimumCrypto,
+                            'min_usd' => $minimumUsd,
+                            'confirmations' => isset($network['required_confirmations']) ? (int) $network['required_confirmations'] : null,
+                            'enabled' => true,
+                        ];
+                    }
+                }
+
+                return $coins ?: self::FALLBACK_CURRENCIES;
+            } catch (\Throwable $e) {
+                Log::warning('[OxaPayInvoice] Currency catalogue unavailable', ['error' => $e->getMessage()]);
+                return self::FALLBACK_CURRENCIES;
+            }
+        });
+    }
+
+    private function acceptedSymbols(array $data): array
+    {
+        $items = $data['list'] ?? $data['currencies'] ?? $data;
+        $symbols = [];
+        foreach ($items as $key => $item) {
+            $symbol = is_string($item)
+                ? $item
+                : (is_array($item) ? ($item['symbol'] ?? $item['currency'] ?? null) : null);
+            $symbol ??= is_string($key) ? $key : null;
+            if ($symbol) $symbols[] = strtoupper($symbol);
+        }
+        return array_values(array_unique($symbols));
+    }
+
+    private function preferredNetworkKey(string $network, array $keys): string
+    {
+        $preferred = ['BEP20', 'TRC20', 'ERC20', 'TON', 'BTC'];
+        foreach ($preferred as $alias) {
+            if (in_array($alias, $keys, true)) return $alias;
+        }
+        return $network;
     }
 
     // Creates an OxaPay white-label invoice that returns a direct deposit address.
@@ -43,7 +108,7 @@ class OxaPayInvoiceGateway extends OxaPayGateway
         string $ipnUrl,
         string $email = '',
     ): array {
-        $params = self::CURRENCY_PARAMS[$toCurrency] ?? null;
+        $params = collect($this->getAcceptedCoins())->firstWhere('value', $toCurrency);
 
         if (!$params) {
             return ['success' => false, 'message' => "Unsupported currency: {$toCurrency}"];
@@ -92,7 +157,8 @@ class OxaPayInvoiceGateway extends OxaPayGateway
             $data = $response->json();
 
             if (!$response->successful() || empty($data['data']['track_id'])) {
-                $msg = $data['message'] ?? "OxaPay API error (HTTP {$response->status()})";
+                $msg = data_get($data, 'error.message')
+                    ?: ($data['message'] ?? "OxaPay API error (HTTP {$response->status()})");
                 Log::error('[OxaPayInvoice] createCoinInvoice failed', [
                     'status' => $response->status(),
                     'preview' => mb_substr($response->body(), 0, 500),

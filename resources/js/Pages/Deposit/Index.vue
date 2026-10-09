@@ -210,6 +210,19 @@ const selectedNetwork = ref(null);
 const amountModalOpen = ref(false);
 const invoicePosting = ref(false);
 const invoiceErrors  = ref({});
+const selectedCoinName = computed(() => {
+    const network = selectedNetwork.value;
+    if (!network) return 'Crypto';
+    return network.currency_name
+        ?? network.label?.split(' · ')[0]
+        ?? network.payCurrency
+        ?? 'Crypto';
+});
+const selectedMinimum = computed(() => Math.max(1, Number(selectedNetwork.value?.min_usd ?? 1)));
+const selectedMinimumLabel = computed(() => selectedMinimum.value.toLocaleString(undefined, {
+    minimumFractionDigits: selectedMinimum.value % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+}));
 
 function openNetwork(network) {
     if (!network.enabled) return;
@@ -232,8 +245,8 @@ async function submitInvoice() {
         invoiceErrors.value.amount = 'Deposit amount is required.';
         return;
     }
-    if (amt < 1) {
-        invoiceErrors.value.amount = 'Minimum deposit is $1.';
+    if (amt < selectedMinimum.value) {
+        invoiceErrors.value.amount = `Minimum deposit for ${selectedCoinName.value} is $${selectedMinimumLabel.value}.`;
         return;
     }
     if (amt > 10000) {
@@ -241,7 +254,7 @@ async function submitInvoice() {
         return;
     }
     if (!selectedNetwork.value?.enabled) {
-        invoiceErrors.value.coin = 'Please select USDT BEP20.';
+        invoiceErrors.value.coin = 'Please select an available coin and network.';
         return;
     }
 
@@ -682,8 +695,11 @@ onUnmounted(() => {
                             <div class="relative w-full max-w-md rounded-2xl bg-white dark:bg-[#0c1829] border border-slate-200 dark:border-white/[0.08] shadow-2xl p-5">
                                 <div class="flex items-center justify-between gap-3 mb-4">
                                     <div>
-                                        <p class="text-[14px] font-bold text-slate-800 dark:text-white">USDT BEP20 Deposit</p>
+                                        <p class="text-[14px] font-bold text-slate-800 dark:text-white">{{ selectedCoinName }} Deposit</p>
                                         <p class="text-[12px] text-slate-400 mt-0.5">Enter deposit amount in USD</p>
+                                        <p v-if="selectedMinimum > 1" class="text-[10.5px] text-amber-500 mt-1">
+                                            Minimum for this coin: ${{ selectedMinimumLabel }}
+                                        </p>
                                     </div>
                                     <button type="button" @click="closeAmountModal" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]">
                                         <X class="w-4 h-4" />
@@ -692,10 +708,12 @@ onUnmounted(() => {
 
                                 <div class="grid grid-cols-4 gap-2 mb-3">
                                     <button v-for="amt in INVOICE_QUICK_AMOUNTS" :key="amt"
-                                        type="button" @click="invoiceAmount = amt"
+                                        type="button" :disabled="amt < selectedMinimum" @click="invoiceAmount = amt"
                                         :class="[
                                             'h-10 rounded-xl font-bold text-[12px] border transition-all',
-                                            invoiceAmount == amt
+                                            amt < selectedMinimum
+                                                ? 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.05] text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                                                : invoiceAmount == amt
                                                 ? 'bg-sky-500 text-white border-transparent shadow-md shadow-sky-500/30'
                                                 : 'bg-slate-50 dark:bg-white/[0.04] border-slate-200 dark:border-white/[0.07] text-slate-600 dark:text-slate-400 hover:border-sky-300',
                                         ]">${{ amt }}</button>
@@ -703,7 +721,7 @@ onUnmounted(() => {
 
                                 <div class="relative">
                                     <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] font-bold text-slate-400 pointer-events-none">$</span>
-                                    <input v-model="invoiceAmount" type="number" min="1" max="10000" step="0.01"
+                                    <input v-model="invoiceAmount" type="number" :min="selectedMinimum" max="10000" step="0.01"
                                         placeholder="Enter amount"
                                         class="w-full h-12 pl-8 pr-4 text-[15px] font-mono rounded-xl border bg-slate-50 dark:bg-white/[0.04] text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/25 focus:border-sky-400 border-slate-200 dark:border-white/[0.07]" />
                                 </div>

@@ -42,7 +42,7 @@ class InvoiceDepositController extends Controller
         $validated = $request->validate([
             'amount'      => ['required', 'numeric', 'min:1', 'max:10000'],
             'gateway_id'  => ['required', 'integer'],
-            'to_currency' => ['required', 'string', 'in:USDT_BEP20'],
+            'to_currency' => ['required', 'string', 'max:100'],
         ]);
 
         $gateway = PaymentGateway::active()
@@ -65,6 +65,10 @@ class InvoiceDepositController extends Controller
         try {
             /** @var OxaPayInvoiceGateway $driver */
             $driver = GatewayManager::make($gateway);
+
+            if (!collect($driver->getAcceptedCoins())->contains('value', strtoupper($validated['to_currency']))) {
+                return $this->errorResponse($request, 'to_currency', 'That currency or network is no longer available. Please choose another one.');
+            }
 
             $result = $driver->createCoinInvoice(
                 amount:      $amount,
