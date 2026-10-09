@@ -47,14 +47,15 @@ class CurateServices extends Command
 
         $services = Service::query()
             ->where('type', 'smm')->whereNotNull('provider_id')
-            ->with(['category:id,name', 'provider:id,name'])
+            ->with(['category:id,name', 'provider:id,name,slug'])
             ->withCount(['orders as completed_orders_count' => fn ($q) => $q->where('status', 'completed')])
             ->get();
 
         $eligible = $services->filter(fn (Service $service) => $this->eligible($service));
-        $selectedCategoryIds = $eligible
+        $previouslyApprovedServices = $eligible
             ->filter(fn (Service $service) => data_get($service->metadata, 'catalog_approved') === true)
-            ->pluck('category_id');
+            ->values();
+        $selectedCategoryIds = collect();
 
         // Keep every configured provider represented on each platform where it
         // has a valid offering, even when another provider has a lower price.
@@ -74,6 +75,19 @@ class CurateServices extends Command
             if ($bestCategory !== null) $selectedCategoryIds->push($bestCategory);
         }
 
+        // Keep two individually ranked choices for each useful platform/service
+        // type. Category-only selection could previously choose a broad category
+        // whose top three entries were all views, leaving valid comments,
+        // reactions, followers, or saves invisible to customers.
+        $coverageSelections = collect();
+        foreach ($eligible->groupBy(fn (Service $service) => $this->platform($service).'|'.$this->serviceKind($service)) as $key => $group) {
+            if (str_ends_with((string) $key, '|other')) continue;
+
+            $coverageSelections->push(...$group
+                ->sortByDesc(fn (Service $service) => $this->score($service))
+                ->take(2));
+        }
+
         $selectedCategoryIds = $selectedCategoryIds->filter()->unique();
         $selected = collect();
         foreach ($eligible->whereIn('category_id', $selectedCategoryIds)->groupBy('category_id') as $group) {
@@ -83,7 +97,16 @@ class CurateServices extends Command
         }
 
         // Never hide a valid service that has already completed real customer orders.
-        $selected = $selected->merge($eligible->where('completed_orders_count', '>', 0))->unique('id')->values();
+        $selected = $selected
+            ->merge($previouslyApprovedServices)
+            ->merge($coverageSelections)
+            ->merge($eligible->filter(fn (Service $service) =>
+                $service->provider?->slug === 'jinglesmm'
+                && (string) $service->provider_service_code === '3453'
+            ))
+            ->merge($eligible->where('completed_orders_count', '>', 0))
+            ->unique('id')
+            ->values();
 
         $this->table(['Provider', 'Platform', 'Selected'], $selected
             ->groupBy(fn (Service $service) => ($service->provider?->name ?? '#'.$service->provider_id).' / '.$this->platform($service))
@@ -146,6 +169,8 @@ class CurateServices extends Command
             && (float) $service->min_amount > 0
             && (float) $service->max_amount >= (float) $service->min_amount
             && trim((string) data_get($service->metadata, 'description')) !== ''
+            && ! ($service->provider?->slug === 'jinglesmm'
+                && in_array((string) $service->provider_service_code, ['3761', '3762'], true))
             && ! collect(self::REJECT)->contains(fn (string $term) => str_contains($name, $term));
     }
 
@@ -178,8 +203,11 @@ class CurateServices extends Command
     private function score(Service $service): float
     {
         $metadata = $service->metadata ?? [];
+        $verifiedPreference = $service->provider?->slug === 'jinglesmm'
+            && (string) $service->provider_service_code === '3453' ? 500000 : 0;
+
         return ($service->completed_orders_count * 1000000)
-            + (data_get($metadata, 'catalog_approved') === true ? 100000 : 0)
+            + $verifiedPreference
             + (! empty($metadata['description']) ? 10000 : 0)
             + (! empty($metadata['refill']) ? 500 : 0)
             + (! empty($metadata['cancel']) ? 250 : 0)
