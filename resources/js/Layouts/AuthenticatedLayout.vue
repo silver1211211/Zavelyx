@@ -422,7 +422,8 @@ const userLevel = computed(() => authUser.value?.account_level ?? 'basic');
                                 <div class="px-3 py-2.5 border-b" :style="{ borderColor: 'var(--dd-sep)' }">
                                     <p class="text-[9.5px] font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-600">Select Currency</p>
                                 </div>
-                                <div class="py-1">
+                                <div class="py-1 overflow-y-auto overscroll-contain"
+                                    style="max-height: 25vh; scrollbar-gutter: stable;">
                                     <button v-for="c in currencies" :key="c.code" @click="selectCurrency(c.code)"
                                         class="w-full flex items-center gap-3 px-3 py-2.5 transition-colors active:bg-sky-500/5"
                                         :style="displayCurrency === c.code ? 'background: rgba(14,165,233,0.08)' : ''"
