@@ -25,7 +25,7 @@ import {
     WifiOff,
     Zap,
 } from 'lucide-vue-next';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps({
     stats:             { type: Object, default: () => ({}) },
@@ -57,7 +57,7 @@ let refreshTimer = null;
 
 function refresh() {
     refreshing.value = true;
-    router.reload({ only: ['stats', 'providers', 'liveOrders', 'recentOrders'], preserveState: true, preserveScroll: true, onFinish: () => {
+    router.reload({ only: ['stats', 'monthlyRevenue', 'providers', 'liveOrders', 'recentOrders'], preserveState: true, preserveScroll: true, onFinish: () => {
         refreshing.value = false;
         lastRefresh.value = new Date();
     }});
@@ -83,9 +83,15 @@ onMounted(() => {
     };
     requestAnimationFrame(tick);
 
-    refreshTimer = setInterval(refresh, 60_000);
+    refreshTimer = setInterval(refresh, 15_000);
 });
 onUnmounted(() => clearInterval(refreshTimer));
+
+watch(() => props.stats, (stats) => {
+    for (const key in stats) {
+        if (key in displayStats.value) displayStats.value[key] = Number(stats[key] ?? 0);
+    }
+}, { deep: true });
 
 // Stat cards
 const statCards = computed(() => [

@@ -9,7 +9,6 @@ use App\Models\Order;
 use App\Models\PaymentInvoice;
 use App\Models\Provider;
 use App\Models\Service;
-use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -33,11 +32,10 @@ class DashboardController extends Controller
             $date = now()->subMonths($monthsAgo);
             return [
                 'month'   => $date->format('M'),
-                'revenue' => (float) Transaction::whereYear('created_at', $date->year)
-                    ->whereMonth('created_at', $date->month)
-                    ->where('type', 'deposit')
-                    ->where('status', 'successful')
-                    ->sum('amount'),
+                'revenue' => $this->realizedRevenue(
+                    $date->copy()->startOfMonth(),
+                    $date->copy()->endOfMonth(),
+                ),
             ];
         })->values();
 
@@ -139,7 +137,7 @@ class DashboardController extends Controller
                 'pendingOrders'    => Order::where('status', 'pending')->count(),
                 'processingOrders' => Order::where('status', 'processing')->count(),
                 'completedOrders'  => Order::where('status', 'completed')->count(),
-                'revenue'          => (float) Transaction::where('type', 'deposit')->where('status', 'successful')->sum('amount'),
+                'revenue'          => $this->realizedRevenue(),
                 'activeServices'   => Service::where('is_active', true)->count(),
                 'newUsersToday'    => User::whereDate('created_at', today())->count(),
                 'pendingRefunds'   => $pendingRefunds,
@@ -168,5 +166,22 @@ class DashboardController extends Controller
             'depositStats'   => $depositStats,
             'depositDaily'   => $depositDaily,
         ]);
+    }
+
+    /** Gross sales actually retained after recorded SMM refunds, plus delivered SMS orders. */
+    private function realizedRevenue(mixed $from = null, mixed $to = null): float
+    {
+        $smm = Order::query()
+            ->whereIn('status', ['completed', 'partial'])
+            ->when($from && $to, fn ($query) => $query->whereBetween('created_at', [$from, $to]))
+            ->selectRaw('COALESCE(SUM(GREATEST(amount - COALESCE(refund_amount, 0), 0)), 0) AS total')
+            ->value('total');
+
+        $sms = DB::table('number_orders')
+            ->where('status', 'FINISHED')
+            ->when($from && $to, fn ($query) => $query->whereBetween('created_at', [$from, $to]))
+            ->sum('amount');
+
+        return round((float) $smm + (float) $sms, 8);
     }
 }
