@@ -15,7 +15,7 @@ const brandAssets = {
 </script>
 
 <template>
-    <img v-if="brandAssets[platform]" :src="brandAssets[platform]" alt="" class="block h-full w-full object-contain" aria-hidden="true">
+    <img v-if="brandAssets[platform]" :src="brandAssets[platform]" alt="" class="block object-contain" aria-hidden="true">
 
     <!-- YouTube -->
     <svg v-else-if="platform === 'youtube'" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
