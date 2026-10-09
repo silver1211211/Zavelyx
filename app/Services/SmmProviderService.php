@@ -355,6 +355,18 @@ class SmmProviderService
 
             $categoryModel = $categoryCache[$categoryName];
             $serviceSlug   = Str::slug($name) . '-' . $provider->id . '-' . $serviceId;
+            $suppliedDescription = $providerDescription !== ''
+                ? $this->sanitizeCustomerDescription($providerDescription)
+                : $this->buildSuppliedDescription(
+                    $name,
+                    $categoryName,
+                    (float) ($item['min'] ?? 1),
+                    (float) ($item['max'] ?? 1000000),
+                    $providerMetadata,
+                );
+            $providerMetadata['description'] = $suppliedDescription;
+            $providerMetadata['description_source'] = $providerDescription !== '' ? 'provider' : 'verified_attributes';
+            $providerMetadata['documentation_status'] = 'supplied_details_only';
 
             $payload = [
                 'name'                  => $name,
@@ -382,10 +394,12 @@ class SmmProviderService
                 $existingMetadata = $existing->metadata ?? [];
                 $manualDescription = trim((string) ($existingMetadata['description'] ?? ''));
                 $existingDescriptionSource = $existingMetadata['description_source'] ?? null;
+                $preserveManualDescription = $manualDescription !== ''
+                    && in_array($existingDescriptionSource, ['admin', 'manual'], true);
                 $payload['metadata'] = array_merge($existingMetadata, $providerMetadata, [
-                    'description' => $manualDescription !== '' ? $manualDescription : $providerDescription,
-                    'description_source' => $manualDescription !== '' ? ($existingDescriptionSource ?: 'admin') : ($providerDescription !== '' ? 'provider' : null),
-                    'documentation_status' => ($manualDescription !== '' || $providerDescription !== '') ? 'documented' : 'review_required',
+                    'description' => $preserveManualDescription ? $manualDescription : $suppliedDescription,
+                    'description_source' => $preserveManualDescription ? $existingDescriptionSource : ($providerDescription !== '' ? 'provider' : 'verified_attributes'),
+                    'documentation_status' => $preserveManualDescription ? 'documented' : 'supplied_details_only',
                 ]);
                 unset($payload['is_active']);
                 $existing->update($payload);
@@ -485,24 +499,67 @@ class SmmProviderService
     {
         $metadata = $service->metadata ?? [];
         $service->loadMissing('category:id,name');
-        $minimum = number_format((float) ($service->min_amount ?? 1), 0, '.', ',');
-        $maximum = number_format((float) ($service->max_amount ?? 0), 0, '.', ',');
-        $refill = !empty($metadata['refill']) ? 'available; duration unspecified by provider' : 'not available';
-        $cancel = !empty($metadata['cancel']) ? 'available' : 'not available';
-        $dripfeed = !empty($metadata['dripfeed']) ? 'available' : 'not available';
+        return $this->buildSuppliedDescription(
+            (string) $service->name,
+            (string) ($service->category?->name ?: 'Uncategorized'),
+            (float) ($service->min_amount ?? 1),
+            (float) ($service->max_amount ?? 0),
+            $metadata,
+        );
+    }
 
-        return implode("\n", [
-            (string) $service->name . '.',
-            'Category: ' . ($service->category?->name ?: 'Uncategorized') . '.',
-            "Order quantity: {$minimum} to {$maximum} units.",
-            'Start time: unspecified by provider.',
-            'Delivery speed: unspecified by provider.',
-            "Refill: {$refill}.",
-            "Cancellation: {$cancel}.",
-            "Drip-feed: {$dripfeed}.",
-            'Restrictions and special requirements: unspecified by provider. Use the correct public link for the selected service.',
-            'No start-time, delivery-speed, quality, or completion guarantee is stated by the provider.',
-        ]);
+    public function sanitizeCustomerDescription(string $description): string
+    {
+        $lines = preg_split('/\R/u', $description) ?: [];
+        $cleaned = array_map(static function (string $line): string {
+            $line = preg_replace('/\[[^\]]*\bprovider\b[^\]]*\]/iu', '', $line) ?? $line;
+            $line = preg_replace('/\([^\)]*\bprovider\b[^\)]*\)/iu', '', $line) ?? $line;
+            $line = preg_replace('/\bprovider(?:\s+service)?\b/iu', '', $line) ?? $line;
+            $line = preg_replace('/\s*\|\s*\|\s*/u', ' | ', $line) ?? $line;
+            $line = preg_replace('/\s{2,}/u', ' ', $line) ?? $line;
+            return trim($line, " \t\n\r\0\x0B|");
+        }, $lines);
+
+        return implode("\n", array_values(array_filter($cleaned, static fn (string $line): bool => $line !== '')));
+    }
+
+    private function buildSuppliedDescription(string $name, string $category, float $minimum, float $maximum, array $metadata): string
+    {
+        $sentence = static fn (string $value): string => rtrim(trim($value), '.') . '.';
+        $safeName = $this->sanitizeCustomerDescription($name);
+        $safeCategory = $this->sanitizeCustomerDescription($category);
+        $lines = [$sentence($safeName)];
+        if ($safeCategory !== '') {
+            $lines[] = $sentence('Category: ' . $safeCategory);
+        }
+        $lines[] = sprintf(
+            'Order quantity: %s to %s units.',
+            number_format($minimum, 0, '.', ','),
+            number_format($maximum, 0, '.', ','),
+        );
+
+        if (filled($metadata['start_time'] ?? null)) {
+            $lines[] = $sentence('Start time: ' . $metadata['start_time']);
+        }
+        if (filled($metadata['delivery_rate'] ?? null)) {
+            $lines[] = $sentence('Delivery speed: ' . $metadata['delivery_rate']);
+        }
+        if (filled($metadata['refill_duration'] ?? null)) {
+            $lines[] = $sentence('Refill: ' . $metadata['refill_duration']);
+        } elseif (!empty($metadata['refill'])) {
+            $lines[] = 'Refill: available.';
+        }
+        if (!empty($metadata['cancel'])) {
+            $lines[] = 'Cancellation: available.';
+        }
+        if (!empty($metadata['dripfeed'])) {
+            $lines[] = 'Drip-feed: available.';
+        }
+        if (filled($metadata['restrictions'] ?? null)) {
+            $lines[] = $sentence('Requirements: ' . $metadata['restrictions']);
+        }
+
+        return $this->sanitizeCustomerDescription(implode("\n", $lines));
     }
 
     public function clearUserServiceCaches(): void

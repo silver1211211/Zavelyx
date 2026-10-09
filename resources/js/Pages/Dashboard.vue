@@ -497,7 +497,7 @@ const maxOrders = computed(() =>
 
 function serviceDescriptionLines(service) {
     const description = service?.metadata?.description?.trim();
-    return (description || 'Verified service details are not available yet. Please contact support before ordering if you need clarification.')
+    return (description || '')
         .split(/\r?\n/).map(line => line.trim()).filter(Boolean);
 }
 
@@ -979,7 +979,8 @@ const SMS_SERVICES = [
                             </div>
                         </div>
 
-                        <div class="px-4 py-2.5 border-b border-slate-200 dark:border-white/[0.06] flex items-center gap-2 flex-wrap">
+                        <div v-if="selected.metadata?.refill || selected.metadata?.cancel || selected.metadata?.dripfeed"
+                            class="px-4 py-2.5 border-b border-slate-200 dark:border-white/[0.06] flex items-center gap-2 flex-wrap">
                             <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-600">Features:</span>
                             <span v-if="selected.metadata?.refill"
                                 class="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/20">↻ Refill</span>
@@ -987,11 +988,10 @@ const SMS_SERVICES = [
                                 class="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/15 border border-sky-200 dark:border-sky-500/20">✕ Cancel</span>
                             <span v-if="selected.metadata?.dripfeed"
                                 class="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/15 border border-violet-200 dark:border-violet-500/20">⏱ Drip</span>
-                            <span v-if="!selected.metadata?.refill && !selected.metadata?.cancel && !selected.metadata?.dripfeed"
-                                class="text-[10px] text-slate-400 dark:text-slate-600">None</span>
                         </div>
 
-                        <div class="px-4 py-4 border-b border-slate-200 dark:border-white/[0.06] bg-white/60 dark:bg-white/[0.025]">
+                        <div v-if="serviceDescriptionLines(selected).length"
+                            class="px-4 py-4 border-b border-slate-200 dark:border-white/[0.06] bg-white/60 dark:bg-white/[0.025]">
                             <div class="flex items-center gap-2 mb-2.5">
                                 <div class="w-7 h-7 rounded-lg flex items-center justify-center bg-sky-500/10 border border-sky-500/15">
                                     <CheckCircle2 class="w-3.5 h-3.5 text-sky-500" :stroke-width="2.2" />

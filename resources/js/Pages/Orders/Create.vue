@@ -95,7 +95,7 @@ const totalServiceCount = computed(() =>
 
 function serviceDescriptionLines(service) {
     const description = service?.metadata?.description?.trim();
-    return (description || 'Verified service details are not available yet. Please contact support before ordering if you need clarification.')
+    return (description || '')
         .split(/\r?\n/).map(line => line.trim()).filter(Boolean);
 }
 
@@ -671,7 +671,7 @@ function submit() {
                 enter-from-class="opacity-0 -translate-y-1"
                 enter-to-class="opacity-100 translate-y-0"
             >
-            <div v-if="selected" :key="selected.id">
+            <div v-if="selected && serviceDescriptionLines(selected).length" :key="selected.id">
                 <p class="text-[13px] font-bold text-slate-700 dark:text-white mb-2">Service overview</p>
                 <div class="rounded-2xl overflow-hidden border bg-gradient-to-br from-sky-50 to-indigo-50/50 dark:from-sky-500/[0.08] dark:to-indigo-500/[0.04] border-sky-200/80 dark:border-sky-400/15">
                     <div class="flex items-center gap-3 px-4 py-3 border-b border-sky-200/70 dark:border-white/[0.06]">
@@ -831,7 +831,8 @@ function submit() {
                     </div>
 
                     <!-- Features row -->
-                    <div class="px-4 py-3 border-b border-slate-200 dark:border-white/[0.06] flex items-center gap-2 flex-wrap">
+                    <div v-if="selected.metadata?.refill || selected.metadata?.cancel || selected.metadata?.dripfeed"
+                        class="px-4 py-3 border-b border-slate-200 dark:border-white/[0.06] flex items-center gap-2 flex-wrap">
                         <span class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-600">Features:</span>
                         <span v-if="selected.metadata?.refill"
                             class="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/20">↻ Refill</span>
@@ -839,8 +840,6 @@ function submit() {
                             class="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/15 border border-sky-200 dark:border-sky-500/20">✕ Cancel</span>
                         <span v-if="selected.metadata?.dripfeed"
                             class="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/15 border border-violet-200 dark:border-violet-500/20">⏱ Drip</span>
-                        <span v-if="!selected.metadata?.refill && !selected.metadata?.cancel && !selected.metadata?.dripfeed"
-                            class="text-[10px] text-slate-400 dark:text-slate-600">None</span>
                     </div>
 
                     <!-- Total row -->

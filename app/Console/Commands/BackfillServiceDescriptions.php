@@ -29,14 +29,19 @@ class BackfillServiceDescriptions extends Command
             $provider->services()->where('type', 'smm')->with('category:id,name')->orderBy('id')->chunkById(250, function ($services) use ($smm, &$updated, &$preserved): void {
                 foreach ($services as $service) {
                     $metadata = $service->metadata ?? [];
-                    if (trim((string) ($metadata['description'] ?? '')) !== '') {
+                    $description = trim((string) ($metadata['description'] ?? ''));
+                    $source = (string) ($metadata['description_source'] ?? '');
+                    if ($description !== '' && in_array($source, ['admin', 'manual'], true)) {
                         $preserved++;
                         continue;
                     }
 
-                    $metadata['description'] = $smm->buildFactualDescription($service);
-                    $metadata['description_source'] = 'verified_attributes';
-                    $metadata['documentation_status'] = 'factual_basics_complete';
+                    $providerDescription = trim((string) ($metadata['provider_description'] ?? ''));
+                    $metadata['description'] = $providerDescription !== ''
+                        ? $smm->sanitizeCustomerDescription($providerDescription)
+                        : $smm->buildFactualDescription($service);
+                    $metadata['description_source'] = $providerDescription !== '' ? 'provider' : 'verified_attributes';
+                    $metadata['documentation_status'] = 'supplied_details_only';
                     if (!$this->option('dry-run')) {
                         $service->update(['metadata' => $metadata]);
                     }
