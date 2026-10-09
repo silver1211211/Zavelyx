@@ -1,11 +1,11 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { fetchTimeout } from '@/utils/fetchTimeout';
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import {
     AlertCircle, ArrowRight, ArrowUpRight, Bitcoin, CheckCircle2, ChevronLeft, Clock, Copy,
     CreditCard, ExternalLink, Globe, Landmark, Link2, Loader2, MonitorCheck, QrCode, RefreshCw,
-    Search, Shield, Sparkles, Wallet, Wrench, X,
+    History, Search, Shield, Sparkles, Wallet, Wrench, X,
 } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
@@ -173,13 +173,35 @@ const invoiceGateway = computed(() =>
     invoiceGateways.value.find(g => g.configured) ?? invoiceGateways.value[0] ?? null
 );
 
-const CRYPTO_NETWORKS = [
+const CRYPTO_NETWORKS = ref([
     { label: 'USDT BEP20', value: 'USDT_BEP20', payCurrency: 'USDT', network: 'BEP20', enabled: true },
     { label: 'USDT TRC20', value: 'USDT_TRC20', payCurrency: 'USDT', network: 'TRC20', enabled: false },
     { label: 'Ethereum', value: 'ETH', payCurrency: 'ETH', network: 'Ethereum', enabled: false },
     { label: 'Bitcoin', value: 'BTC', payCurrency: 'BTC', network: 'Bitcoin', enabled: false },
     { label: 'Polygon USDT', value: 'USDT_POLYGON', payCurrency: 'USDT', network: 'Polygon', enabled: false },
-];
+]);
+const networksLoading = ref(false);
+
+async function loadCryptoNetworks() {
+    if (!invoiceGateway.value?.configured || networksLoading.value) return;
+    networksLoading.value = true;
+    try {
+        const response = await fetchTimeout('/api/deposit/invoice/coins', {
+            credentials: 'same-origin',
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        }, 20000);
+        if (!response.ok) return;
+        const data = await response.json();
+        if (Array.isArray(data.coins) && data.coins.length) {
+            CRYPTO_NETWORKS.value = data.coins.map(coin => ({
+                ...coin,
+                payCurrency: coin.pay_currency ?? coin.value.split('_')[0],
+                enabled: coin.enabled !== false,
+            }));
+        }
+    } catch {}
+    finally { networksLoading.value = false; }
+}
 
 const INVOICE_QUICK_AMOUNTS = [1, 5, 10, 25, 50, 100, 250, 500];
 const invoiceAmount  = ref('');
@@ -367,14 +389,6 @@ function truncateHash(hash) {
 }
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ Filtered currency list ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
-const filteredCurrencies = computed(() => {
-    const q = coinSearch.value.trim().toLowerCase();
-    if (!q) return coins.value;
-    return coins.value.filter(c =>
-        c.label.toLowerCase().includes(q) || c.value.toLowerCase().includes(q)
-    );
-});
-
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ Crypto icon helpers ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
 const COIN_COLORS = {
     BTC: '#F7931A', ETH: '#627EEA', USDT: '#26A17B', USDC: '#2775CA',
@@ -383,8 +397,12 @@ const COIN_COLORS = {
     MATIC: '#8247E5', DAI: '#F5AC37',
 };
 function coinIconUrl(value) {
-    const sym = value.split('_')[0].toLowerCase();
-    return `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1.0.0/svg/color/${sym}.svg`;
+    const sym = value.split('_')[0].toUpperCase();
+    const local = { USDT: '/images/crypto/usdt.svg', BNB: '/images/crypto/bnb.svg' };
+    return local[sym] ?? `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/${sym.toLowerCase()}.svg`;
+}
+function networkIconUrl(network) {
+    return /bnb|bep20|binance smart chain/i.test(network?.network ?? network?.value ?? '') ? '/images/crypto/bnb.svg' : '';
 }
 function coinBgColor(value) {
     const sym = value.split('_')[0];
@@ -430,7 +448,10 @@ watch(() => props.deposits, (newDeps, oldDeps) => {
 
 watch(() => props.hasPending, (pending) => { pending ? startPolling() : stopPolling(); });
 
-onMounted(() => { if (props.hasPending) startPolling(); });
+onMounted(() => {
+    loadCryptoNetworks();
+    if (props.hasPending) startPolling();
+});
 onUnmounted(() => {
     stopPolling();
     stopCountdown();
@@ -471,9 +492,17 @@ onUnmounted(() => {
         <div class="max-w-2xl mx-auto space-y-5">
 
             <!-- Page title -->
-            <div>
-                <h1 class="text-[20px] font-black text-slate-900 dark:text-white tracking-tight">Deposit Funds</h1>
-                <p class="text-[13px] text-slate-400 mt-0.5">Add funds to your wallet instantly via crypto</p>
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h1 class="text-[20px] font-black text-slate-900 dark:text-white tracking-tight">Deposit Funds</h1>
+                    <p class="text-[13px] text-slate-400 mt-0.5">Add funds to your wallet instantly via crypto</p>
+                </div>
+                <Link :href="route('deposit.history')"
+                    class="shrink-0 inline-flex items-center gap-2 h-10 px-3.5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] text-[12px] font-bold text-slate-600 dark:text-slate-300 hover:border-sky-300 hover:text-sky-600 transition-all shadow-sm">
+                    <History class="w-4 h-4" />
+                    <span class="hidden sm:inline">Recent Deposits</span>
+                    <span class="sm:hidden">History</span>
+                </Link>
             </div>
 
             <!-- Maintenance banner -->
@@ -535,20 +564,22 @@ onUnmounted(() => {
                                 'bg-white dark:bg-[#0c1829]',
                                 method.disabled
                                     ? 'cursor-not-allowed border-slate-200/70 dark:border-white/[0.06]'
-                                    : 'border-slate-200/80 dark:border-white/[0.07] hover:-translate-y-0.5 hover:shadow-lg hover:border-sky-300 dark:hover:border-sky-500/40 active:scale-[0.99] cursor-pointer',
+                                    : 'border-sky-300 dark:border-sky-400/45 ring-1 ring-sky-200/80 dark:ring-sky-500/20 shadow-[0_10px_36px_rgba(14,165,233,0.20)] dark:shadow-[0_12px_42px_rgba(14,165,233,0.16)] hover:-translate-y-0.5 hover:shadow-[0_16px_44px_rgba(14,165,233,0.30)] hover:border-sky-400 dark:hover:border-sky-400/70 active:scale-[0.99] cursor-pointer',
                             ]">
 
                             <!-- Brand banner ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â gradient wash + spread-out brand marks behind the text -->
-                            <div :class="['absolute inset-0 rounded-2xl bg-gradient-to-br opacity-[0.08] dark:opacity-[0.16]', method.gradient]"></div>
+                            <div :class="['absolute inset-0 rounded-2xl bg-gradient-to-br', method.live ? 'opacity-[0.16] dark:opacity-[0.24]' : 'opacity-[0.08] dark:opacity-[0.16]', method.gradient]"></div>
+                            <div v-if="method.live" class="pointer-events-none absolute -top-20 right-8 h-40 w-40 rounded-full bg-cyan-300/30 dark:bg-cyan-400/15 blur-3xl animate-pulse"></div>
+                            <div v-if="method.live" class="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-90"></div>
                             <div class="absolute inset-y-0 right-0 flex w-[34%] items-center justify-end gap-1.5 pr-3 pointer-events-none sm:w-1/2 sm:gap-4 sm:pr-5">
                                 <template v-for="brandKey in method.brands" :key="brandKey">
                                     <!-- Crypto ticker icon (full color) -->
                                     <img v-if="BRAND_LOGOS[brandKey].type === 'crypto' && !hubIconErrors[brandKey]"
                                         :src="coinIconUrl(BRAND_LOGOS[brandKey].sym)" :alt="BRAND_LOGOS[brandKey].label"
-                                        :class="['h-5 sm:h-8 w-auto object-contain drop-shadow-sm shrink-0', method.disabled ? 'opacity-40 saturate-[0.6] sm:opacity-50' : 'opacity-70 sm:opacity-90']"
+                                        :class="['h-5 sm:h-8 w-auto object-contain shrink-0 transition-transform duration-200', method.disabled ? 'opacity-40 saturate-[0.6] sm:opacity-50' : 'opacity-100 saturate-[1.25] brightness-110 drop-shadow-[0_3px_8px_rgba(15,23,42,0.30)] dark:drop-shadow-[0_0_8px_rgba(125,211,252,0.35)] group-hover:scale-110']"
                                         @error="hubIconErrors[brandKey] = true" />
                                     <div v-else-if="BRAND_LOGOS[brandKey].type === 'crypto'"
-                                        class="h-5 sm:h-8 w-5 sm:w-8 rounded-full flex items-center justify-center text-white text-[6.5px] sm:text-[8px] font-black shrink-0 opacity-60 sm:opacity-70"
+                                        :class="['h-5 sm:h-8 w-5 sm:w-8 rounded-full flex items-center justify-center text-white text-[6.5px] sm:text-[8px] font-black shrink-0 transition-transform duration-200', method.disabled ? 'opacity-50 saturate-[0.6]' : 'opacity-100 brightness-110 shadow-lg group-hover:scale-110']"
                                         :style="`background:${coinBgColor(BRAND_LOGOS[brandKey].sym)}`">{{ BRAND_LOGOS[brandKey].sym.slice(0, 3) }}</div>
 
                                     <!-- Monochrome brand mark (Visa / Mastercard / PayPal) -->
@@ -576,7 +607,7 @@ onUnmounted(() => {
                                 </template>
                             </div>
                             <!-- Fade mask so brand marks recede into the card rather than hard-cutting -->
-                            <div class="absolute inset-y-0 left-0 w-[76%] bg-gradient-to-r from-white dark:from-[#0c1829] from-70% to-transparent pointer-events-none sm:w-2/5 sm:from-60%"></div>
+                            <div :class="['absolute inset-y-0 left-0 w-[76%] bg-gradient-to-r from-70% to-transparent pointer-events-none sm:w-2/5 sm:from-60%', method.live ? 'from-white/95 dark:from-[#0c1829]/95' : 'from-white dark:from-[#0c1829]']"></div>
 
                             <!-- Title + description -->
                             <div class="relative z-10 flex-1 min-w-0 pr-[34%] sm:pr-0">
@@ -584,6 +615,9 @@ onUnmounted(() => {
                                     <p :class="['text-[14.5px] font-bold', method.disabled ? 'text-slate-600 dark:text-slate-300' : 'text-slate-800 dark:text-white']">{{ method.title }}</p>
                                     <span v-if="method.badge" :class="['text-[9.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border', method.badgeClass]">
                                         {{ method.badge }}
+                                    </span>
+                                    <span v-else-if="method.live" class="inline-flex items-center gap-1 rounded-full border border-emerald-200 dark:border-emerald-400/25 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span> Available
                                     </span>
                                 </div>
                                 <p class="text-[12px] text-slate-400 dark:text-slate-500 mt-0.5 leading-snug">{{ method.description }}</p>
@@ -672,7 +706,11 @@ onUnmounted(() => {
                                 <p class="text-[13px] font-bold text-slate-800 dark:text-white">Select Crypto Network</p>
                             </div>
 
-                            <div class="space-y-2">
+                            <div v-if="networksLoading" class="py-10 flex items-center justify-center gap-2 text-[12px] text-slate-400">
+                                <Loader2 class="w-4 h-4 animate-spin text-sky-500" /> Loading live networks…
+                            </div>
+
+                            <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[420px] overflow-y-auto pr-1">
                                 <button v-for="network in CRYPTO_NETWORKS" :key="network.value"
                                     type="button"
                                     :disabled="!network.enabled"
@@ -694,6 +732,9 @@ onUnmounted(() => {
                                             :style="`background:${coinBgColor(network.value)}`">
                                             {{ network.payCurrency.slice(0, 4) }}
                                         </div>
+                                        <img v-if="networkIconUrl(network)"
+                                            :src="networkIconUrl(network)" alt="BNB Smart Chain"
+                                            class="absolute -right-1 -bottom-1 w-4 h-4 rounded-full bg-white dark:bg-[#101d30] p-px border border-white dark:border-[#101d30] shadow" />
                                     </div>
 
                                     <div class="flex-1 min-w-0">
@@ -764,7 +805,7 @@ onUnmounted(() => {
 
                                 <div class="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-500/[0.08] border border-amber-200 dark:border-amber-500/20">
                                     <AlertCircle class="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                                    <p class="text-[12px] font-semibold text-amber-700 dark:text-amber-400">Send only USDT on BEP20 network to this address.</p>
+                                    <p class="text-[12px] font-semibold text-amber-700 dark:text-amber-400">Send only {{ checkoutPayment.pay_currency }} on the {{ checkoutPayment.network }} network to this address.</p>
                                 </div>
                             </div>
                         </div>

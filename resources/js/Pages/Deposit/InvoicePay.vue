@@ -38,7 +38,13 @@ const hasMemo    = computed(() => !!current.value?.memo);
 const coinSymbol = computed(() => (current.value?.pay_currency ?? '').split('_')[0].toLowerCase());
 const coinIconUrl = computed(() =>
     coinSymbol.value
-        ? `https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@1.0.0/svg/color/${coinSymbol.value}.svg`
+        ? ({ usdt: '/images/crypto/usdt.svg', bnb: '/images/crypto/bnb.svg' }[coinSymbol.value]
+            ?? `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/${coinSymbol.value}.svg`)
+        : ''
+);
+const networkIconUrl = computed(() =>
+    /bnb|bep20|binance smart chain/i.test(current.value?.network ?? current.value?.pay_currency ?? '')
+        ? '/images/crypto/bnb.svg'
         : ''
 );
 const COIN_COLORS = {
@@ -159,7 +165,7 @@ function fmtUsd(v)    { return Number(v || 0).toFixed(2); }
 <template>
     <Head :title="`Pay ${current.pay_currency ?? 'Crypto'} — Invoice`" />
     <AuthenticatedLayout>
-        <div class="max-w-md mx-auto pt-4 pb-16 px-4 sm:px-0">
+        <div class="max-w-xl mx-auto pt-4 pb-16 px-3 sm:px-0">
 
             <!-- Back link -->
             <Link :href="route('deposit.index')"
@@ -249,7 +255,8 @@ function fmtUsd(v)    { return Number(v || 0).toFixed(2); }
                 </div>
 
                 <!-- Coin + amount header -->
-                <div class="bg-white dark:bg-[#0c1829] rounded-2xl border border-slate-200/80 dark:border-white/[0.05] p-5 mb-3 shadow-sm">
+                <div class="relative overflow-hidden bg-gradient-to-br from-white via-sky-50/60 to-indigo-50/70 dark:from-[#0c1829] dark:via-[#0c1829] dark:to-indigo-950/30 rounded-3xl border border-sky-200/70 dark:border-sky-500/15 p-5 sm:p-6 mb-4 shadow-xl shadow-sky-500/10">
+                    <div class="absolute -right-14 -top-14 w-40 h-40 rounded-full bg-sky-400/10 blur-2xl pointer-events-none"></div>
                     <div class="flex items-center gap-4">
                         <!-- Coin avatar -->
                         <div class="relative shrink-0">
@@ -263,6 +270,8 @@ function fmtUsd(v)    { return Number(v || 0).toFixed(2); }
                                 :style="`background: ${coinColor}`">
                                 {{ (current.pay_currency ?? '??').split('_')[0].slice(0, 4) }}
                             </div>
+                            <img v-if="networkIconUrl" :src="networkIconUrl" alt="BNB Smart Chain"
+                                class="absolute -right-1 -bottom-1 w-6 h-6 rounded-full bg-white dark:bg-[#101d30] p-0.5 border-2 border-white dark:border-[#101d30] shadow-md" />
                         </div>
                         <!-- Amount -->
                         <div class="flex-1 min-w-0">
@@ -287,10 +296,10 @@ function fmtUsd(v)    { return Number(v || 0).toFixed(2); }
                 </div>
 
                 <!-- QR Code card -->
-                <div class="bg-white dark:bg-[#0c1829] rounded-2xl border border-slate-200/80 dark:border-white/[0.05] overflow-hidden mb-3 shadow-sm">
+                <div class="bg-white dark:bg-[#0c1829] rounded-3xl border border-slate-200/80 dark:border-white/[0.07] overflow-hidden mb-4 shadow-xl shadow-slate-900/5">
                     <!-- QR -->
-                    <div class="flex justify-center py-6 bg-white">
-                        <div v-if="qrDataUrl" class="p-3 rounded-2xl border border-slate-100 shadow-sm">
+                    <div class="flex justify-center py-7 bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.09),transparent_65%)]">
+                        <div v-if="qrDataUrl" class="p-4 rounded-3xl bg-white border border-sky-100 shadow-lg shadow-sky-500/10 ring-4 ring-white">
                             <img :src="qrDataUrl" alt="QR Code" class="w-[200px] h-[200px] block" />
                         </div>
                         <div v-else-if="hasAddress" class="w-[200px] h-[200px] rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center gap-2">
@@ -312,7 +321,7 @@ function fmtUsd(v)    { return Number(v || 0).toFixed(2); }
                         <!-- Wallet address -->
                         <div>
                             <p class="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400 mb-1.5">Payment Address</p>
-                            <div class="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.07]">
+                            <div class="flex items-center gap-2 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.07]">
                                 <p class="flex-1 text-[11.5px] font-mono text-slate-700 dark:text-slate-300 break-all leading-relaxed">
                                     <span v-if="hasAddress">{{ current.pay_address }}</span>
                                     <span v-else class="text-slate-400 italic">Loading…</span>
