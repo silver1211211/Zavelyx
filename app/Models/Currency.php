@@ -6,12 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Currency extends Model
 {
-    protected $fillable = ['code', 'name', 'symbol', 'exchange_rate', 'is_active', 'is_default', 'sort_order'];
+    protected $fillable = [
+        'code', 'name', 'symbol', 'exchange_rate', 'source_exchange_rate',
+        'auto_update', 'is_active', 'is_default', 'sort_order',
+    ];
 
     protected function casts(): array
     {
         return [
             'exchange_rate' => 'decimal:6',
+            'source_exchange_rate' => 'decimal:10',
+            'auto_update' => 'boolean',
             'is_active' => 'boolean',
             'is_default' => 'boolean',
             'sort_order' => 'integer',

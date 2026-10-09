@@ -22,7 +22,8 @@ class WebsiteSettingsController extends Controller
             'currency_settings'   => [
                 'live_rates_enabled'        => (bool) Setting::get('currency.live_rates_enabled', '0'),
                 'exchange_api_url'          => Setting::get('currency.exchange_api_url', 'https://open.er-api.com/v6/latest/USD'),
-                'exchange_refresh_interval' => (int) Setting::get('currency.exchange_refresh_interval', 30),
+                'exchange_refresh_interval' => (int) Setting::get('currency.exchange_refresh_interval', 1440),
+                'rate_markup_percent'        => (float) Setting::get('currency.rate_markup_percent', 4),
                 'last_synced_at'            => Setting::get('currency.last_synced_at'),
             ],
         ]);
@@ -35,6 +36,7 @@ class WebsiteSettingsController extends Controller
             'name'          => ['required', 'string', 'max:100'],
             'symbol'        => ['required', 'string', 'max:10'],
             'exchange_rate' => ['required', 'numeric', 'min:0.000001'],
+            'auto_update'   => ['boolean'],
             'is_active'     => ['boolean'],
             'sort_order'    => ['integer', 'min:0'],
         ]);
@@ -43,6 +45,13 @@ class WebsiteSettingsController extends Controller
         $data['is_default'] = false;
         $data['sort_order'] = $data['sort_order'] ?? 99;
         $data['code']       = strtoupper($data['code']);
+        $data['auto_update'] = $data['code'] === 'USD' ? false : ($data['auto_update'] ?? false);
+        $data['source_exchange_rate'] = $data['exchange_rate'];
+
+        if ($data['code'] === 'USD') {
+            $data['exchange_rate'] = 1;
+            $data['source_exchange_rate'] = 1;
+        }
 
         Currency::create($data);
 
@@ -56,11 +65,21 @@ class WebsiteSettingsController extends Controller
             'name'          => ['required', 'string', 'max:100'],
             'symbol'        => ['required', 'string', 'max:10'],
             'exchange_rate' => ['required', 'numeric', 'min:0.000001'],
+            'auto_update'   => ['boolean'],
             'is_active'     => ['boolean'],
             'sort_order'    => ['integer', 'min:0'],
         ]);
 
         $data['code'] = strtoupper($data['code']);
+
+        if ($currency->code === 'USD') {
+            $data['exchange_rate'] = 1;
+            $data['source_exchange_rate'] = 1;
+            $data['auto_update'] = false;
+        } elseif (!($data['auto_update'] ?? false)) {
+            // A manual rate is already the administrator's final customer rate.
+            $data['source_exchange_rate'] = $data['exchange_rate'];
+        }
 
         if ($currency->is_default) {
             $data['is_active'] = true;
@@ -119,8 +138,15 @@ class WebsiteSettingsController extends Controller
     public function refreshRates(Request $request): JsonResponse
     {
         try {
-            Artisan::call('currencies:sync', ['--force' => true]);
+            $exitCode = Artisan::call('currencies:sync', ['--force' => true]);
             $output = Artisan::output();
+
+            if ($exitCode !== 0) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => trim($output) ?: 'Rate refresh failed. Existing rates were preserved.',
+                ], 422);
+            }
 
             $lastSynced = Setting::get('currency.last_synced_at');
 

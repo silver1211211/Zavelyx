@@ -18,7 +18,7 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 const page = usePage();
 const siteSettings   = computed(() => page.props.site_settings ?? {});
 const dashLogoUrl    = computed(() => siteSettings.value.logo_dashboard || siteSettings.value.logo_url || '');
-const { currencies, displayCurrency, current, symbol, setCurrency, formatAmount, formatMoney } = useCurrency();
+const { currencies, displayCurrency, current, symbol, setCurrency, formatBalanceAmount, formatMoney } = useCurrency();
 const toast = useToast();
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
@@ -65,7 +65,7 @@ const userInitials = computed(() => {
 // ── Live balance ──────────────────────────────────────────────────────────────
 const liveBalance    = ref(null);
 const rawBalance     = computed(() => liveBalance.value ?? authUser.value?.wallet?.balance ?? 0);
-const displayBalance = computed(() => formatAmount(rawBalance.value));
+const displayBalance = computed(() => formatBalanceAmount(rawBalance.value));
 
 let balanceTimer = null;
 async function pollBalance() {

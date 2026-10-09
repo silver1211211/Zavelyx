@@ -86,6 +86,24 @@ export function useCurrency() {
     }
 
     /**
+     * Convert stored USD accounting values without the customer-price markup.
+     * Manual currencies use their administrator-defined final rate.
+     */
+    function convertBalanceAmount(usdAmount) {
+        const rate = parseFloat(current.value?.source_exchange_rate ?? current.value?.exchange_rate ?? 1);
+        return parseFloat(usdAmount ?? 0) * rate;
+    }
+
+    function formatBalanceAmount(usdAmount, decimals = 2) {
+        const converted = convertBalanceAmount(usdAmount);
+        const autoMax = converted >= 1 ? 2 : converted >= 0.01 ? 4 : 8;
+        return converted.toLocaleString('en-US', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: Math.max(decimals, autoMax),
+        });
+    }
+
+    /**
      * Format a USD amount as a plain number string in the current currency.
      * e.g. "1,600.00" for NGN, "1.00" for USD
      *
@@ -149,7 +167,9 @@ export function useCurrency() {
         symbol,
         setCurrency,
         convertAmount,
+        convertBalanceAmount,
         formatAmount,
+        formatBalanceAmount,
         formatMoney,
     };
 }

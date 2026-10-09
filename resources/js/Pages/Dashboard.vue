@@ -26,12 +26,12 @@ const props = defineProps({
     recentOrders:    { type: Array,  default: () => [] },
 });
 
-const { current, symbol, convertAmount, formatMoney } = useCurrency();
+const { current, symbol, convertAmount, convertBalanceAmount, formatMoney } = useCurrency();
 const authUser = computed(() => usePage().props.auth.user);
 
 // ── Animated balance — re-animates on currency or balance change ──────────────
 const displayed = ref(0);
-const target    = computed(() => convertAmount(props.balance));
+const target    = computed(() => convertBalanceAmount(props.balance));
 let   animFrame = null;
 
 function animateTo(toValue) {

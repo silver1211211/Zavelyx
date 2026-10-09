@@ -10,7 +10,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:show', 'view-orders', 'place-another']);
 
-const { symbol, convertAmount } = useCurrency();
+const { symbol, convertAmount, convertBalanceAmount } = useCurrency();
 
 function close()        { emit('update:show', false); }
 function viewOrders()   { emit('update:show', false); emit('view-orders'); }
@@ -164,7 +164,7 @@ function placeAnother() { emit('update:show', false); emit('place-another'); }
                             <div v-if="order.remaining_balance != null" class="flex items-center justify-between px-4 py-2.5 text-[12px]">
                                 <span class="text-slate-500 dark:text-slate-400">New Balance</span>
                                 <span class="font-bold text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">
-                                    {{ symbol }}{{ convertAmount(order.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }) }}
+                                    {{ symbol }}{{ convertBalanceAmount(order.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }) }}
                                 </span>
                             </div>
 

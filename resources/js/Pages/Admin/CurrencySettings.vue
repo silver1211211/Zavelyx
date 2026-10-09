@@ -20,7 +20,7 @@ const flash = computed(() => page.props.flash ?? {});
 const settingsForm = useForm({
     live_rates_enabled:        props.currency_settings.live_rates_enabled ?? false,
     exchange_api_url:          props.currency_settings.exchange_api_url   ?? 'https://open.er-api.com/v6/latest/USD',
-    exchange_refresh_interval: props.currency_settings.exchange_refresh_interval ?? 30,
+    exchange_refresh_interval: props.currency_settings.exchange_refresh_interval ?? 1440,
 });
 
 function saveSettings() {
@@ -43,7 +43,7 @@ async function refreshRates() {
                 Accept: 'application/json',
                 'X-XSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
             },
-        }, 20000);
+        }, 45000);
         const data = await res.json();
         if (data.ok) {
             refreshMessage.value = data.message ?? 'Rates refreshed successfully.';
@@ -73,6 +73,7 @@ const form = useForm({
     name:          '',
     symbol:        '',
     exchange_rate: '',
+    auto_update:   true,
     sort_order:    99,
     is_active:     true,
 });
@@ -82,6 +83,7 @@ function openAdd() {
     form.reset();
     form.sort_order  = 99;
     form.is_active   = true;
+    form.auto_update = true;
     showForm.value   = true;
 }
 
@@ -91,6 +93,7 @@ function openEdit(c) {
     form.name             = c.name;
     form.symbol           = c.symbol;
     form.exchange_rate    = c.exchange_rate;
+    form.auto_update      = c.auto_update;
     form.sort_order       = c.sort_order;
     form.is_active        = c.is_active;
     form.clearErrors();
@@ -168,7 +171,7 @@ function deleteCurrency(c) {
                     <div>
                         <h2 class="text-[14px] font-bold text-slate-900 dark:text-white">Live Exchange Rate Automation</h2>
                         <p class="text-[12px] text-slate-400 dark:text-slate-400 mt-0.5">
-                            Auto-fetch rates every N minutes from an open forex API.
+                            Auto-fetch validated USD rates and add a 4% customer-price margin.
                         </p>
                     </div>
                 </div>
@@ -307,6 +310,7 @@ function deleteCurrency(c) {
                                 <th class="text-left px-6 py-3 text-[10.5px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">Currency</th>
                                 <th class="text-left px-4 py-3 text-[10.5px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">Symbol</th>
                                 <th class="text-right px-4 py-3 text-[10.5px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">Rate (per $1 USD)</th>
+                                <th class="text-center px-4 py-3 text-[10.5px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">Management</th>
                                 <th class="text-center px-4 py-3 text-[10.5px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">Status</th>
                                 <th class="text-center px-4 py-3 text-[10.5px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">Default</th>
                                 <th class="px-6 py-3"></th>
@@ -328,8 +332,19 @@ function deleteCurrency(c) {
                                     </div>
                                 </td>
                                 <td class="px-4 py-3.5 font-mono font-bold text-slate-700 dark:text-slate-300">{{ c.symbol }}</td>
-                                <td class="px-4 py-3.5 text-right font-semibold text-slate-700 dark:text-slate-300">
-                                    {{ Number(c.exchange_rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }) }}
+                                <td class="px-4 py-3.5 text-right text-slate-700 dark:text-slate-300">
+                                    <p class="font-semibold">{{ Number(c.exchange_rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 }) }}</p>
+                                    <p v-if="c.auto_update" class="text-[10px] text-slate-400 dark:text-slate-500">
+                                        Market {{ Number(c.source_exchange_rate).toLocaleString('en-US', { maximumFractionDigits: 6 }) }} + 4%
+                                    </p>
+                                </td>
+                                <td class="px-4 py-3.5 text-center">
+                                    <span :class="['inline-flex px-2.5 py-1 rounded-full text-[10.5px] font-bold',
+                                        c.auto_update
+                                            ? 'bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400'
+                                            : 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400']">
+                                        {{ c.auto_update ? 'Automatic' : 'Manual' }}
+                                    </span>
                                 </td>
                                 <td class="px-4 py-3.5 text-center">
                                     <button @click="toggleCurrency(c)"
@@ -371,7 +386,7 @@ function deleteCurrency(c) {
                                 </td>
                             </tr>
                             <tr v-if="currencies.length === 0">
-                                <td colspan="6" class="px-6 py-12 text-center text-[13px] text-slate-400 dark:text-slate-600">
+                                <td colspan="7" class="px-6 py-12 text-center text-[13px] text-slate-400 dark:text-slate-600">
                                     No currencies configured yet.
                                 </td>
                             </tr>
@@ -386,7 +401,8 @@ function deleteCurrency(c) {
                 <p class="text-[11.5px] text-sky-600/80 dark:text-sky-500/70 leading-relaxed">
                     All balances are stored internally in USD. Exchange rates only affect the display layer — when a user
                     selects a currency, amounts are multiplied by the rate. No actual conversion or transfer happens.
-                    USD must always have a rate of 1.0 and cannot be auto-updated.
+                    USD always remains 1.0. Automatic currencies use the validated market rate plus 4% for customer prices.
+                    Manual rates are treated as final and never receive another markup. Wallet accounting remains in USD.
                 </p>
             </div>
 
@@ -454,7 +470,7 @@ function deleteCurrency(c) {
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 mb-1.5">Rate per $1 USD *</label>
+                                <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 mb-1.5">Final rate per $1 USD *</label>
                                 <input v-model="form.exchange_rate" type="number" step="any" min="0.000001" required
                                     placeholder="1.0"
                                     class="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-white/[0.1]
@@ -469,6 +485,25 @@ function deleteCurrency(c) {
                                         bg-slate-50 dark:bg-white/[0.04] text-slate-800 dark:text-white text-[13px]
                                         focus:outline-none focus:ring-2 focus:ring-sky-500/30 transition-all" />
                             </div>
+                        </div>
+
+                        <!-- Rate management toggle -->
+                        <div v-if="form.code !== 'USD'" class="flex items-center justify-between py-2">
+                            <div>
+                                <span class="text-[13px] font-semibold text-slate-700 dark:text-slate-300">Automatic rate updates</span>
+                                <p class="text-[10.5px] text-slate-400 mt-0.5">Uses the market rate plus 4%. Turn off to preserve this final rate.</p>
+                            </div>
+                            <button type="button"
+                                role="switch"
+                                :aria-checked="form.auto_update"
+                                @click="form.auto_update = !form.auto_update"
+                                :class="[
+                                    'relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
+                                    form.auto_update ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-600',
+                                ]">
+                                <span :class="['pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform',
+                                    form.auto_update ? 'translate-x-4' : 'translate-x-0']" />
+                            </button>
                         </div>
 
                         <!-- Active toggle -->

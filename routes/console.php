@@ -62,9 +62,10 @@ Schedule::command('deposits:poll --minutes=2 --limit=100')
 
 // ── Currency exchange rates ────────────────────────────────────────────────────
 
-// Sync live exchange rates from open.er-api.com (only runs if live_rates_enabled=1)
+// Check every minute so the admin-configured interval is respected. The command
+// performs a network request only when that interval is due.
 Schedule::command('currencies:sync')
-    ->everyThirtyMinutes()
+    ->everyMinute()
     ->withoutOverlapping(5)
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/currencies-sync.log'));

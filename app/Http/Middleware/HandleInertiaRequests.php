@@ -46,7 +46,7 @@ class HandleInertiaRequests extends Middleware
             'currencies' => Currency::where('is_active', true)
                 ->orderBy('sort_order')
                 ->orderBy('code')
-                ->get(['code', 'name', 'symbol', 'exchange_rate', 'is_default']),
+                ->get(['code', 'name', 'symbol', 'exchange_rate', 'source_exchange_rate', 'is_default']),
             'preferred_currency' => $user?->preferred_currency,
             'contact_link'  => Setting::get('contact.link', 'mailto:support@zavelyx.com'),
             'admin_open_tickets' => session('admin_authenticated') ? Ticket::where('admin_unread', true)->count() : 0,
