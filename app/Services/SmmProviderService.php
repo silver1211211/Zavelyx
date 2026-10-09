@@ -381,9 +381,10 @@ class SmmProviderService
             if ($existing) {
                 $existingMetadata = $existing->metadata ?? [];
                 $manualDescription = trim((string) ($existingMetadata['description'] ?? ''));
+                $existingDescriptionSource = $existingMetadata['description_source'] ?? null;
                 $payload['metadata'] = array_merge($existingMetadata, $providerMetadata, [
                     'description' => $manualDescription !== '' ? $manualDescription : $providerDescription,
-                    'description_source' => $manualDescription !== '' ? 'admin' : ($providerDescription !== '' ? 'provider' : null),
+                    'description_source' => $manualDescription !== '' ? ($existingDescriptionSource ?: 'admin') : ($providerDescription !== '' ? 'provider' : null),
                     'documentation_status' => ($manualDescription !== '' || $providerDescription !== '') ? 'documented' : 'review_required',
                 ]);
                 unset($payload['is_active']);
@@ -475,6 +476,28 @@ class SmmProviderService
         $provider->update(['last_synced_at' => now()]);
         $this->clearUserServiceCaches();
         return $summary;
+    }
+
+    public function buildFactualDescription(Service $service): string
+    {
+        $metadata = $service->metadata ?? [];
+        $minimum = number_format((float) ($service->min_amount ?? 1), 0, '.', ',');
+        $maximum = number_format((float) ($service->max_amount ?? 0), 0, '.', ',');
+        $refill = !empty($metadata['refill']) ? 'available; duration unspecified by provider' : 'not available';
+        $cancel = !empty($metadata['cancel']) ? 'available' : 'not available';
+        $dripfeed = !empty($metadata['dripfeed']) ? 'available' : 'not available';
+
+        return implode("\n", [
+            (string) $service->name . '.',
+            "Order quantity: {$minimum} to {$maximum} units.",
+            'Start time: unspecified by provider.',
+            'Delivery speed: unspecified by provider.',
+            "Refill: {$refill}.",
+            "Cancellation: {$cancel}.",
+            "Drip-feed: {$dripfeed}.",
+            'Restrictions and special requirements: unspecified by provider. Use the correct public link for the selected service.',
+            'No start-time, delivery-speed, quality, or completion guarantee is stated by the provider.',
+        ]);
     }
 
     public function clearUserServiceCaches(): void

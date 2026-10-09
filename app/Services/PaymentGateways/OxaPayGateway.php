@@ -146,24 +146,24 @@ class OxaPayGateway implements GatewayContract
             $response = Http::withHeaders([
                 'merchant_api_key' => $this->apiKey,
                 'Content-Type'     => 'application/json',
-            ])->timeout(15)->post(self::API . '/v1/payment/inquiry', [
-                'trackId' => $paymentId,
-            ]);
+            ])->connectTimeout(5)
+                ->timeout(15)
+                ->retry([250, 750], throw: false)
+                ->get(self::API . '/v1/payment/' . rawurlencode($paymentId));
 
             $data = $response->json();
 
             Log::info('[OxaPay] getPaymentStatus response', [
                 'payment_id' => $paymentId,
                 'http_status'=> $response->status(),
-                'result'     => $data['result'] ?? null,
                 'status'     => $data['data']['status'] ?? null,
             ]);
 
-            // OxaPay result code 100 = success; anything else is an error.
-            if (!$response->successful() || ($data['result'] ?? null) !== 100) {
-                Log::warning('[OxaPay] getPaymentStatus non-100 result', [
+            if (!$response->successful() || !is_array($data) || !is_array($data['data'] ?? null)) {
+                Log::warning('[OxaPay] getPaymentStatus failed', [
                     'payment_id' => $paymentId,
-                    'result'     => $data['result'] ?? null,
+                    'http_status'=> $response->status(),
+                    'api_status' => $data['status'] ?? null,
                     'message'    => $data['message'] ?? null,
                 ]);
                 return ['success' => false, 'status' => 'unknown', 'data' => []];
