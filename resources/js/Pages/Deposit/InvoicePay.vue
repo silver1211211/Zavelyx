@@ -5,7 +5,7 @@ import { fetchTimeout } from '@/utils/fetchTimeout';
 import { Head, Link } from '@inertiajs/vue3';
 import {
     AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Clock,
-    Copy, ExternalLink, Loader2, RefreshCw, TriangleAlert,
+    Copy, ExternalLink, Loader2, TriangleAlert,
 } from 'lucide-vue-next';
 import QRCode from 'qrcode';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
@@ -367,17 +367,6 @@ function fmtUsd(v)    { return Number(v || 0).toFixed(2); }
                         <li>• Keep this page open — it detects your payment automatically.</li>
                         <li>• Your balance is credited after blockchain confirmation.</li>
                     </ul>
-                </div>
-
-                <!-- Poll status row -->
-                <div class="flex items-center justify-center gap-1.5 mb-5">
-                    <div :class="['flex items-center gap-1.5 text-[11px] font-semibold',
-                        pollError ? 'text-amber-500' : 'text-slate-400 dark:text-slate-400']">
-                        <Loader2 v-if="polling" class="w-3 h-3 animate-spin" />
-                        <RefreshCw v-else class="w-3 h-3" />
-                        <span v-if="pollError">Connection issue — retrying…</span>
-                        <span v-else>Auto-checking every 5 seconds</span>
-                    </div>
                 </div>
 
                 <!-- OxaPay fallback link — only shown if payment_url exists -->

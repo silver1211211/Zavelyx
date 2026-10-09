@@ -4,8 +4,8 @@ import { coinAsset, networkAsset } from '@/utils/cryptoAssets';
 import { fetchTimeout } from '@/utils/fetchTimeout';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import {
-    AlertCircle, ArrowRight, ArrowUpRight, Bitcoin, CheckCircle2, ChevronLeft, Clock, Copy,
-    CreditCard, ExternalLink, Globe, Landmark, Link2, Loader2, MonitorCheck, QrCode, RefreshCw,
+    AlertCircle, ArrowRight, ArrowUpRight, Bitcoin, CheckCircle2, ChevronLeft, Clock,
+    CreditCard, ExternalLink, Globe, Landmark, Link2, Loader2, MonitorCheck, QrCode,
     History, Search, Shield, Sparkles, Wallet, Wrench, X,
 } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
@@ -210,11 +210,6 @@ const selectedNetwork = ref(null);
 const amountModalOpen = ref(false);
 const invoicePosting = ref(false);
 const invoiceErrors  = ref({});
-const checkoutPayment = ref(null);
-const checkoutStatus = ref('Waiting for payment');
-const countdownText = ref('');
-let countdownTimer = null;
-let checkoutPollTimer = null;
 
 function openNetwork(network) {
     if (!network.enabled) return;
@@ -227,80 +222,6 @@ function openNetwork(network) {
 function closeAmountModal() {
     if (invoicePosting.value) return;
     amountModalOpen.value = false;
-}
-
-function startCountdown(expiresAt) {
-    stopCountdown();
-    const tick = () => {
-        if (!expiresAt) {
-            countdownText.value = '';
-            return;
-        }
-        const ms = new Date(expiresAt).getTime() - Date.now();
-        if (ms <= 0) {
-            countdownText.value = 'Expired';
-            stopCountdown();
-            return;
-        }
-        const total = Math.floor(ms / 1000);
-        const minutes = Math.floor(total / 60).toString().padStart(2, '0');
-        const seconds = (total % 60).toString().padStart(2, '0');
-        countdownText.value = `${minutes}:${seconds}`;
-    };
-    tick();
-    countdownTimer = setInterval(tick, 1000);
-}
-
-function stopCountdown() {
-    if (countdownTimer) {
-        clearInterval(countdownTimer);
-        countdownTimer = null;
-    }
-}
-
-function startCheckoutPolling(reference) {
-    stopCheckoutPolling();
-    if (!reference) return;
-    checkoutPollTimer = setInterval(async () => {
-        try {
-            const res = await fetchTimeout(`/api/deposits/${reference}/status`, {
-                credentials: 'same-origin',
-                headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
-            }, 12000);
-            if (!res.ok) return;
-            const data = await res.json();
-            checkoutStatus.value = data.status_label ?? checkoutStatus.value;
-            if (data.is_terminal || data.is_credited) {
-                stopCheckoutPolling();
-                refreshDeposits();
-                if (data.is_credited) window.dispatchEvent(new Event('balance-refresh'));
-            }
-        } catch {}
-    }, 10000);
-}
-
-function stopCheckoutPolling() {
-    if (checkoutPollTimer) {
-        clearInterval(checkoutPollTimer);
-        checkoutPollTimer = null;
-    }
-}
-
-async function copyAddress() {
-    const address = checkoutPayment.value?.address;
-    if (!address) return;
-    try {
-        await navigator.clipboard.writeText(address);
-        showToast('success', 'Wallet address copied.');
-    } catch {
-        showToast('error', 'Could not copy address.');
-    }
-}
-
-function closeCheckoutPayment() {
-    checkoutPayment.value = null;
-    stopCountdown();
-    stopCheckoutPolling();
 }
 
 async function submitInvoice() {
@@ -351,12 +272,14 @@ async function submitInvoice() {
             return;
         }
 
-        checkoutPayment.value = data.payment;
-        checkoutStatus.value = data.payment?.status_label ?? 'Waiting for payment';
+        const reference = data.payment?.reference;
+        if (!reference) {
+            invoiceErrors.value = { amount: 'Checkout was created, but its payment page could not be opened. Please use Recent Deposits.' };
+            return;
+        }
+
         amountModalOpen.value = false;
-        startCountdown(data.payment?.expires_at);
-        startCheckoutPolling(data.payment?.reference);
-        refreshDeposits();
+        router.visit(route('deposit.invoice.pay', reference));
     } catch {
         invoiceErrors.value = { amount: 'Connection error. Please try again.' };
     } finally {
@@ -453,8 +376,6 @@ onMounted(() => {
 });
 onUnmounted(() => {
     stopPolling();
-    stopCountdown();
-    stopCheckoutPolling();
 });
 </script>
 
@@ -755,59 +676,6 @@ onUnmounted(() => {
                             <p v-if="invoiceErrors.coin" class="mt-2 text-[11.5px] text-rose-500">{{ invoiceErrors.coin }}</p>
                         </div>
 
-                        <!-- Payment details popup -->
-                        <div v-if="checkoutPayment" class="fixed inset-0 z-50 flex items-center justify-center px-4">
-                            <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" @click="closeCheckoutPayment"></div>
-                            <div class="relative w-full max-w-md rounded-2xl bg-white dark:bg-[#0c1829] border border-slate-200 dark:border-white/[0.08] shadow-2xl p-5 space-y-4">
-                                <div class="flex items-center justify-between gap-3">
-                                    <div>
-                                        <p class="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400 mb-1">Payment Details</p>
-                                        <p class="text-[14px] font-bold text-slate-800 dark:text-white">{{ checkoutStatus }}</p>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                                            {{ countdownText || '60:00' }}
-                                        </span>
-                                        <button type="button" @click="closeCheckoutPayment" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06]">
-                                            <X class="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="flex flex-col items-center gap-3 p-4 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.06]">
-                                    <img v-if="checkoutPayment.qr_code" :src="checkoutPayment.qr_code" alt="Payment QR code"
-                                        class="w-40 h-40 rounded-xl bg-white p-2 object-contain" />
-                                    <QrCode v-else class="w-20 h-20 text-slate-300" />
-                                    <p class="text-[11.5px] text-slate-400 text-center">Scan to pay, or copy the wallet address below.</p>
-                                </div>
-
-                                <div class="space-y-3">
-                                    <div class="flex justify-between gap-4 text-[13px]">
-                                        <span class="text-slate-500 dark:text-slate-400">Amount to pay</span>
-                                        <span class="font-bold text-slate-800 dark:text-slate-200">{{ checkoutPayment.pay_amount }} {{ checkoutPayment.pay_currency }}</span>
-                                    </div>
-                                    <div class="flex justify-between gap-4 text-[13px]">
-                                        <span class="text-slate-500 dark:text-slate-400">Network</span>
-                                        <span class="font-bold text-slate-800 dark:text-slate-200">{{ checkoutPayment.network }}</span>
-                                    </div>
-                                    <div class="space-y-1.5">
-                                        <span class="text-[12px] text-slate-500 dark:text-slate-400">Wallet address</span>
-                                        <div class="flex items-center gap-2">
-                                            <code class="flex-1 min-w-0 truncate px-3 py-2 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.07] text-[11.5px] text-slate-700 dark:text-slate-300">{{ checkoutPayment.address }}</code>
-                                            <button type="button" @click="copyAddress"
-                                                class="h-9 w-9 rounded-lg flex items-center justify-center bg-sky-500 text-white hover:bg-sky-600 transition-colors">
-                                                <Copy class="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-500/[0.08] border border-amber-200 dark:border-amber-500/20">
-                                    <AlertCircle class="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                                    <p class="text-[12px] font-semibold text-amber-700 dark:text-amber-400">Send only {{ checkoutPayment.pay_currency }} on the {{ checkoutPayment.network }} network to this address.</p>
-                                </div>
-                            </div>
-                        </div>
                         <!-- Amount modal -->
                         <div v-if="amountModalOpen" class="fixed inset-0 z-50 flex items-center justify-center px-4">
                             <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" @click="closeAmountModal"></div>
