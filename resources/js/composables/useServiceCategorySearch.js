@@ -16,13 +16,40 @@ export function serviceMatchesQuery(service, query) {
     return normalized.split(/\s+/).every(term => searchableText.includes(term));
 }
 
+// Provider category names are inconsistent and often repeat the platform name.
+// Platforms are selected by the cards above the form; this selector groups the
+// remaining services by what the customer is actually buying.
+const SERVICE_TYPES = [
+    ['followers', 'Followers', ['followers', 'follower']],
+    ['subscribers', 'Subscribers', ['subscribers', 'subscriber']],
+    ['members', 'Members', ['members', 'member']],
+    ['likes', 'Likes', ['likes', 'like']],
+    ['views', 'Views', ['views', 'view']],
+    ['comments', 'Comments', ['comments', 'comment']],
+    ['shares', 'Shares', ['shares', 'share', 'repost']],
+    ['reactions', 'Reactions', ['reactions', 'reaction', 'emoji']],
+    ['saves', 'Saves', ['saves', 'save', 'favorite', 'wishlist']],
+    ['plays', 'Plays & Streams', ['plays', 'play', 'streams', 'stream', 'listeners', 'listener']],
+    ['votes', 'Votes & Polls', ['votes', 'vote', 'poll']],
+    ['boosts', 'Boosts', ['boosts', 'boost']],
+    ['traffic', 'Traffic', ['traffic', 'visitors', 'website']],
+];
+
+export function serviceTypeCategory(service) {
+    const text = `${service?.name ?? ''} ${service?.category?.name ?? ''}`.toLowerCase();
+    for (const [id, name, terms] of SERVICE_TYPES) {
+        if (terms.some(term => text.includes(term))) return { id: `type:${id}`, name };
+    }
+    return { id: 'type:other', name: 'Other Services' };
+}
+
 // Categories present among `services`, restricted to those with at least
 // one service matching `query` (by service name or category name).
 export function groupCategoriesByQuery(services, query = '') {
     const map = new Map();
     for (const s of services) {
         if (!serviceMatchesQuery(s, query)) continue;
-        const cat = s.category ?? { id: 0, name: 'Other' };
+        const cat = serviceTypeCategory(s);
         if (!map.has(cat.id)) map.set(cat.id, { ...cat, count: 0 });
         map.get(cat.id).count++;
     }
@@ -31,7 +58,7 @@ export function groupCategoriesByQuery(services, query = '') {
 
 export function servicesInCategory(services, categoryId, query = '') {
     if (categoryId == null) return [];
-    return services.filter(s => s.category?.id === categoryId && serviceMatchesQuery(s, query));
+    return services.filter(s => serviceTypeCategory(s).id === categoryId && serviceMatchesQuery(s, query));
 }
 
 // Given the full service list and the current query, decides the next

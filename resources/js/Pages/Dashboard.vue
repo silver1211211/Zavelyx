@@ -484,7 +484,7 @@ function serviceDescriptionLines(service) {
 
 const selectedPlatformCount = computed(() => {
     if (!activePlatform.value || activePlatform.value === 'all') return totalServiceCount.value;
-    return dynamicPlatforms.value.find(platform => platform.key === activePlatform.value)?.count ?? activeServices.value.length;
+    return enrichedPlatforms.value.find(platform => platform.key === activePlatform.value)?.count ?? activeServices.value.length;
 });
 
 // ── SMS service showcase ──────────────────────────────────────────────────────
