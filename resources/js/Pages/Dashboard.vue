@@ -119,6 +119,24 @@ function platformInfo(name) {
     return { key: '', brand: '#64748b', from: '#334155', to: '#475569', glow: '#94a3b8' };
 }
 
+function serviceMatchesPlatform(service, platform) {
+    if (platform === 'all') return true;
+    const text = `${service?.name ?? ''} ${service?.category?.name ?? ''}`.toLowerCase();
+    const terms = platform === 'rednote' ? ['red note', 'rednote', 'xiaohongshu'] : [platform];
+    if (platform === 'other') {
+        return PLATFORM_MAP
+            .filter(item => !['all', 'other', 'x'].includes(item.key))
+            .every(item => !serviceMatchesPlatform(service, item.key));
+    }
+    return terms.some(term => text.includes(term));
+}
+
+function cachePlatformSubsets(services) {
+    for (const platform of enrichedPlatforms.value) {
+        platformCache.set(platform.key, services.filter(service => serviceMatchesPlatform(service, platform.key)));
+    }
+}
+
 // ── Order form ────────────────────────────────────────────────────────────────
 const form = useForm({ service_id: null, link: '', quantity: 100 });
 
@@ -205,6 +223,7 @@ async function loadPlatformServices(platform) {
         if (!Array.isArray(data)) throw new Error('Unexpected response');
         if (requestId !== serviceRequestId) return;
         platformCache.set(platform, data);
+        if (platform === 'all') cachePlatformSubsets(data);
         activeServices.value = data;
         autoSelectFirst();
     } catch {
