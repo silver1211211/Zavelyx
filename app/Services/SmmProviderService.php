@@ -481,6 +481,7 @@ class SmmProviderService
     public function buildFactualDescription(Service $service): string
     {
         $metadata = $service->metadata ?? [];
+        $service->loadMissing('category:id,name');
         $minimum = number_format((float) ($service->min_amount ?? 1), 0, '.', ',');
         $maximum = number_format((float) ($service->max_amount ?? 0), 0, '.', ',');
         $refill = !empty($metadata['refill']) ? 'available; duration unspecified by provider' : 'not available';
@@ -489,6 +490,7 @@ class SmmProviderService
 
         return implode("\n", [
             (string) $service->name . '.',
+            'Category: ' . ($service->category?->name ?: 'Uncategorized') . '.',
             "Order quantity: {$minimum} to {$maximum} units.",
             'Start time: unspecified by provider.',
             'Delivery speed: unspecified by provider.',
@@ -502,6 +504,8 @@ class SmmProviderService
 
     public function clearUserServiceCaches(): void
     {
+        Cache::add('order.services.version', 1, now()->addYears(10));
+        Cache::increment('order.services.version');
         Cache::forget('dash_smm_platforms');
         Cache::forget('dash_popular_services');
         Cache::forget('services.index.smm');

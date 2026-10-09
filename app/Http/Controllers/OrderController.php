@@ -29,21 +29,19 @@ class OrderController extends Controller
     public function index(Request $request): Response
     {
         $orders = $request->user()->orders()
-            ->with(['service:id,name', 'provider:id,name'])
+            ->with('service:id,name')
             ->latest()
             ->paginate(20)
             ->through(fn($o) => [
                 'id'                => $o->id,
                 'reference'         => $o->reference,
                 'service'           => ['name' => $o->service?->name],
-                'provider_name'     => $o->provider?->name,
                 'link'              => $o->link,
                 'quantity'          => (int) ($o->quantity ?? 0),
                 'amount'            => (float) $o->amount,
                 'status'            => $o->status,
                 'start_count'       => (int) ($o->start_count ?? 0),
                 'remains'           => (int) ($o->remains ?? 0),
-                'provider_order_id' => $o->provider_order_id,
                 'refund_status'     => $o->refund_status,
                 'refund_amount'     => $o->refund_amount !== null ? (float) $o->refund_amount : null,
                 'refunded_at'       => $o->refunded_at?->toISOString(),
@@ -61,7 +59,7 @@ class OrderController extends Controller
     {
         // Lightweight: only category metadata for building platform cards.
         // Services are fetched lazily via loadServices() on demand.
-        $categories = Cache::remember('order.categories', 600, fn () =>
+        $categories = Cache::remember('order.categories.v'.$this->serviceCacheVersion(), 600, fn () =>
             DB::table('services as s')
                 ->join('categories as c', 's.category_id', '=', 'c.id')
                 ->leftJoin('providers as p', 's.provider_id', '=', 'p.id')
@@ -91,7 +89,7 @@ class OrderController extends Controller
 
     private function platformCounts(): array
     {
-        return Cache::remember('order.platform_counts', 600, function () {
+        return Cache::remember('order.platform_counts.v'.$this->serviceCacheVersion(), 600, function () {
             $rows = Service::available()
                 ->where('services.type', 'smm')
                 ->join('categories', 'categories.id', '=', 'services.category_id')
@@ -139,8 +137,24 @@ class OrderController extends Controller
             $search = mb_substr($search, 0, 100);
         }
 
+        // Once a platform is selected, do not allow a search for a different
+        // platform to surface cross-labelled provider services (for example,
+        // a Reddit service whose provider name also contains "YouTube").
+        if ($search !== '' && ! in_array($platform, ['all', 'other'], true)) {
+            foreach (self::PLATFORM_KEYS as $candidate) {
+                if (in_array($candidate, [$platform, 'all', 'other'], true)) {
+                    continue;
+                }
+
+                $needle = $candidate === 'rednote' ? 'red note' : $candidate;
+                if (preg_match('/(?<![a-z0-9])'.preg_quote($needle, '/').'(?![a-z0-9])/i', $search)) {
+                    return response()->json([]);
+                }
+            }
+        }
+
         $services = Cache::remember(
-            'order.svcs.'.sha1($platform.'|'.$search),
+            'order.svcs.v'.$this->serviceCacheVersion().'.'.sha1($platform.'|'.$search),
             300,
             function () use ($platform, $search) {
                 $query = Service::available()
@@ -215,6 +229,11 @@ class OrderController extends Controller
         );
 
         return response()->json($services);
+    }
+
+    private function serviceCacheVersion(): int
+    {
+        return max(1, (int) Cache::get('order.services.version', 1));
     }
 
     public function store(Request $request): RedirectResponse
@@ -318,10 +337,8 @@ class OrderController extends Controller
                 'quantity'          => $quantity,
                 'amount'            => $amount,
                 'remaining_balance' => (float) $wallet->balance,
-                'provider_order_id' => $order->provider_order_id,
                 'status'            => $order->status,
                 'link'              => $link,
-                'provider_error'    => $order->provider_response['placement_error'] ?? null,
             ]);
 
             return redirect()->route('orders.create');

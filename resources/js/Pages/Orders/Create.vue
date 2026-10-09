@@ -326,8 +326,6 @@ function submit() {
         amount:         orderTotal.value,
         status:         'pending',
         order_id:       null,
-        provider_order_id: null,
-        provider_error: null,
         remaining_balance: null,
     };
 
@@ -667,13 +665,13 @@ function submit() {
                 enter-from-class="opacity-0 -translate-y-1"
                 enter-to-class="opacity-100 translate-y-0"
             >
-            <div v-if="selected?.metadata?.description && selected.metadata.description.trim()">
+            <div v-if="selected" :key="selected.id">
                 <p class="text-[13px] font-bold text-slate-700 dark:text-white mb-2">Description</p>
                 <div class="px-4 py-4 rounded-2xl border
                     bg-slate-50 dark:bg-[#0d1f35]
                     border-slate-200 dark:border-white/[0.07]
                     text-[13px] text-slate-700 dark:text-slate-300 leading-[1.75] whitespace-pre-line">
-                    {{ selected.metadata.description }}
+                    {{ selected.metadata?.description?.trim() || 'Verified service details are not yet available. Review the service name, category, quantity limits, and price before ordering.' }}
                 </div>
             </div>
             </Transition>
