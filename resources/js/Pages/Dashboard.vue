@@ -1322,7 +1322,7 @@ const SMS_SERVICES = [
                             <p class="text-[10.5px] text-slate-400 dark:text-slate-600 mt-0.5">{{ timeAgo(d.created_at) }}</p>
                         </div>
                         <p class="text-[13px] font-black tabular-nums flex-shrink-0 text-slate-800 dark:text-slate-100 font-mono">
-                            {{ symbol }}{{ convertAmount(d.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) }}
+                            {{ symbol }}{{ convertBalanceAmount(d.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) }}
                         </p>
                         <span class="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold capitalize"
                             :class="depositStatus(d.status).text"

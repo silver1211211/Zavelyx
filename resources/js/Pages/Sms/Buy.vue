@@ -10,7 +10,7 @@ import {
 } from 'lucide-vue-next';
 import { computed, nextTick, onErrorCaptured, onMounted, onUnmounted, ref, watch } from 'vue';
 
-const { symbol, convertAmount } = useCurrency();
+const { symbol, convertAmount, convertBalanceAmount } = useCurrency();
 const page = usePage();
 
 // ── Live wallet balance ────────────────────────────────────────────────────────
@@ -1360,7 +1360,7 @@ onMounted(() => { loadServices(); });
                                         <div class="flex items-center justify-end gap-2">
                                             <span class="text-[9.5px] text-slate-500">New Balance</span>
                                             <span class="text-[11px] font-black text-sky-400 tabular-nums font-mono">
-                                                {{ symbol }}{{ convertAmount(walletBalance).toFixed(2) }}
+                                                {{ symbol }}{{ convertBalanceAmount(walletBalance).toFixed(2) }}
                                             </span>
                                         </div>
                                         <div v-if="expiryCountdown" class="flex items-center justify-end gap-1.5">
@@ -1459,7 +1459,7 @@ onMounted(() => { loadServices(); });
                                 </span>
                                 but your balance is only
                                 <span class="text-rose-400 font-bold">
-                                    {{ symbol }}{{ convertAmount(walletBalance).toFixed(2) }}
+                                    {{ symbol }}{{ convertBalanceAmount(walletBalance).toFixed(2) }}
                                 </span>.
                             </p>
 

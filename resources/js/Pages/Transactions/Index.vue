@@ -15,7 +15,7 @@ const props = defineProps({
     summary:      { type: Object, default: () => ({ total_in: 0, total_out: 0, net: 0 }) },
 });
 
-const { symbol, formatAmount: convertAmount } = useCurrency();
+const { symbol, formatBalanceAmount: convertAmount } = useCurrency();
 
 // ── Filters (reactive, synced to URL) ─────────────────────────────────────────
 const typeFilter   = ref(props.filters.type      ?? '');

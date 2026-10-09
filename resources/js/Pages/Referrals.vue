@@ -12,7 +12,7 @@ const props = defineProps({
     referrals:     { type: Array,  default: () => [] },
 });
 
-const { symbol, formatAmount: convertAmount } = useCurrency();
+const { symbol, formatBalanceAmount: convertAmount } = useCurrency();
 
 const referralLink = computed(() => {
     if (!props.referralCode) return '';
