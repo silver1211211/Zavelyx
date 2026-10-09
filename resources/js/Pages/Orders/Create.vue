@@ -93,6 +93,12 @@ const totalServiceCount = computed(() =>
     dynamicPlatforms.value.reduce((sum, p) => sum + p.count, 0)
 );
 
+function serviceDescriptionLines(service) {
+    const description = service?.metadata?.description?.trim();
+    return (description || 'Verified service details are not available yet. Please contact support before ordering if you need clarification.')
+        .split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+}
+
 // ── Debounce utility ──────────────────────────────────────────────────────────
 function debounce(fn, ms = 250) {
     let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
@@ -666,12 +672,26 @@ function submit() {
                 enter-to-class="opacity-100 translate-y-0"
             >
             <div v-if="selected" :key="selected.id">
-                <p class="text-[13px] font-bold text-slate-700 dark:text-white mb-2">Description</p>
-                <div class="px-4 py-4 rounded-2xl border
-                    bg-slate-50 dark:bg-[#0d1f35]
-                    border-slate-200 dark:border-white/[0.07]
-                    text-[13px] text-slate-700 dark:text-slate-300 leading-[1.75] whitespace-pre-line">
-                    {{ selected.metadata?.description?.trim() || 'Verified service details are not yet available. Review the service name, category, quantity limits, and price before ordering.' }}
+                <p class="text-[13px] font-bold text-slate-700 dark:text-white mb-2">Service overview</p>
+                <div class="rounded-2xl overflow-hidden border bg-gradient-to-br from-sky-50 to-indigo-50/50 dark:from-sky-500/[0.08] dark:to-indigo-500/[0.04] border-sky-200/80 dark:border-sky-400/15">
+                    <div class="flex items-center gap-3 px-4 py-3 border-b border-sky-200/70 dark:border-white/[0.06]">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-sky-500/10 border border-sky-500/20">
+                            <CheckCircle2 class="w-4 h-4 text-sky-500" :stroke-width="2.2" />
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-black uppercase tracking-[0.14em] text-sky-700 dark:text-sky-400">Description &amp; requirements</p>
+                            <p class="text-[10.5px] text-slate-500 dark:text-slate-500">Confirm these details before ordering</p>
+                        </div>
+                    </div>
+                    <div class="px-4 py-4">
+                        <p class="text-[13px] font-semibold text-slate-800 dark:text-slate-100 leading-relaxed mb-3">{{ serviceDescriptionLines(selected)[0] }}</p>
+                        <ul v-if="serviceDescriptionLines(selected).length > 1" class="grid sm:grid-cols-2 gap-x-5 gap-y-2">
+                            <li v-for="line in serviceDescriptionLines(selected).slice(1)" :key="line" class="flex items-start gap-2 text-[12px] leading-relaxed text-slate-600 dark:text-slate-400">
+                                <span class="w-1.5 h-1.5 mt-1.5 rounded-full bg-sky-500 flex-shrink-0" />
+                                <span>{{ line }}</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             </Transition>

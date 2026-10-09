@@ -448,7 +448,10 @@ class SmmProviderService
         $markupType = $provider->markup_type ?? 'percentage';
         $markupValue = (float) ($provider->markup_value ?? 0);
 
-        $provider->services()->where('is_active', true)->whereNotNull('provider_service_code')
+        $provider->services()
+            ->where('is_active', true)
+            ->where('metadata->catalog_approved', true)
+            ->whereNotNull('provider_service_code')
             ->chunkById(500, function ($services) use ($remote, $markupType, $markupValue, &$summary): void {
                 foreach ($services as $service) {
                     try {

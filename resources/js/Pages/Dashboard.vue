@@ -145,6 +145,14 @@ const selected       = ref(null);
 
 const updateSearch = debounce(v => { search.value = v; }, 200);
 const normalizedSearch = computed(() => normalizeQuery(search.value));
+const conflictingPlatform = computed(() => {
+    if (!normalizedSearch.value || ['all', 'other'].includes(activePlatform.value)) return null;
+    const words = ` ${normalizedSearch.value.replace(/[^a-z0-9]+/g, ' ')} `;
+    return PLATFORM_MAP.find(p =>
+        !['x', 'other', activePlatform.value].includes(p.key)
+        && words.includes(` ${p.key === 'rednote' ? 'red note' : p.key} `)
+    ) ?? null;
+});
 
 // ── Categories derived from loaded services ───────────────────────────────────
 // Unfiltered — used to decide whether the category section renders at all.
@@ -209,6 +217,17 @@ async function loadPlatformServices(platform) {
 
 async function searchServices(query) {
     if (!activePlatform.value) return;
+
+    if (conflictingPlatform.value) {
+        ++serviceRequestId;
+        loadingServices.value = false;
+        loadError.value = null;
+        activeServices.value = [];
+        activeCat.value = null;
+        selected.value = null;
+        form.service_id = null;
+        return;
+    }
 
     if (!query) {
         await loadPlatformServices(activePlatform.value);
@@ -340,8 +359,6 @@ function submit() {
         amount:            orderTotal.value,
         status:            'pending',
         order_id:          null,
-        provider_order_id: null,
-        provider_error:    null,
         remaining_balance: null,
     };
 
@@ -458,6 +475,17 @@ function timeAgo(iso) {
 const maxOrders = computed(() =>
     Math.max(1, ...props.popularServices.map(s => s.total_orders))
 );
+
+function serviceDescriptionLines(service) {
+    const description = service?.metadata?.description?.trim();
+    return (description || 'Verified service details are not available yet. Please contact support before ordering if you need clarification.')
+        .split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+}
+
+const selectedPlatformCount = computed(() => {
+    if (!activePlatform.value || activePlatform.value === 'all') return totalServiceCount.value;
+    return dynamicPlatforms.value.find(platform => platform.key === activePlatform.value)?.count ?? activeServices.value.length;
+});
 
 // ── SMS service showcase ──────────────────────────────────────────────────────
 const SMS_SERVICES = [
@@ -647,7 +675,7 @@ const SMS_SERVICES = [
                         <p class="text-[11.5px] text-slate-400 dark:text-slate-600 mt-0.5">
                             <template v-if="loadingServices">Loading services…</template>
                             <template v-else-if="activeServices.length">
-                                {{ activeServices.length.toLocaleString() }} services · {{ platformCats.length }} categories
+                                {{ selectedPlatformCount.toLocaleString() }} services · {{ platformCats.length }} categories
                             </template>
                             <template v-else-if="!activePlatform">Select a platform above</template>
                             <template v-else>{{ totalServiceCount.toLocaleString() }} services available</template>
@@ -684,6 +712,10 @@ const SMS_SERVICES = [
                         <X class="w-3.5 h-3.5" />
                     </button>
                 </div>
+                <p v-if="conflictingPlatform" class="-mt-2 flex items-center gap-1.5 text-[11.5px] font-medium text-amber-600 dark:text-amber-400">
+                    <AlertCircle class="h-3.5 w-3.5 flex-shrink-0" />
+                    Search is limited to {{ PLATFORM_MAP.find(p => p.key === activePlatform)?.label ?? activePlatform }} services. Select {{ conflictingPlatform.label }} above to search it.
+                </p>
 
                 <!-- Load error -->
                 <div v-if="loadError"
@@ -940,6 +972,25 @@ const SMS_SERVICES = [
                                 class="text-[10px] text-slate-400 dark:text-slate-600">None</span>
                         </div>
 
+                        <div class="px-4 py-4 border-b border-slate-200 dark:border-white/[0.06] bg-white/60 dark:bg-white/[0.025]">
+                            <div class="flex items-center gap-2 mb-2.5">
+                                <div class="w-7 h-7 rounded-lg flex items-center justify-center bg-sky-500/10 border border-sky-500/15">
+                                    <CheckCircle2 class="w-3.5 h-3.5 text-sky-500" :stroke-width="2.2" />
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.14em] text-sky-600 dark:text-sky-400">Service description</p>
+                                    <p class="text-[9.5px] text-slate-400 dark:text-slate-500">Review before placing your order</p>
+                                </div>
+                            </div>
+                            <p class="text-[12px] font-semibold text-slate-700 dark:text-slate-200 leading-relaxed mb-2">{{ serviceDescriptionLines(selected)[0] }}</p>
+                            <ul v-if="serviceDescriptionLines(selected).length > 1" class="grid gap-1.5">
+                                <li v-for="line in serviceDescriptionLines(selected).slice(1)" :key="line" class="flex items-start gap-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                                    <span class="w-1.5 h-1.5 mt-1.5 rounded-full bg-sky-400 flex-shrink-0" />
+                                    <span>{{ line }}</span>
+                                </li>
+                            </ul>
+                        </div>
+
                         <div class="px-4 py-4 flex items-center justify-between gap-3
                             bg-gradient-to-r from-sky-50/80 to-indigo-50/40 dark:from-sky-500/[0.07] dark:to-indigo-600/[0.04]">
                             <div class="min-w-0">
@@ -1063,7 +1114,7 @@ const SMS_SERVICES = [
         <!-- ════════════════════════════════════════════════════════════ -->
         <!-- SECTION: ACTIVE NUMBERS + RECENT ORDERS                     -->
         <!-- ════════════════════════════════════════════════════════════ -->
-        <div v-if="activeNumbers.length || recentOrders.length" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <div v-if="false" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
 
             <!-- Active SMS Numbers -->
             <div v-if="activeNumbers.length">
@@ -1175,7 +1226,7 @@ const SMS_SERVICES = [
         <!-- ════════════════════════════════════════════════════════════ -->
         <!-- SECTION: RECENT DEPOSITS + POPULAR SERVICES                 -->
         <!-- ════════════════════════════════════════════════════════════ -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div v-if="false" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
             <!-- Recent Deposits -->
             <div>
@@ -1276,52 +1327,6 @@ const SMS_SERVICES = [
                 </div>
             </div>
         </div>
-
-        <!-- ════════════════════════════════════════════════════════════ -->
-        <!-- MOBILE STICKY BAR                                           -->
-        <!-- ════════════════════════════════════════════════════════════ -->
-        <Teleport to="body">
-            <Transition
-                enter-active-class="transition-all duration-200 ease-out"
-                enter-from-class="opacity-0 translate-y-3"
-                enter-to-class="opacity-100 translate-y-0"
-                leave-active-class="transition-all duration-150 ease-in"
-                leave-from-class="opacity-100 translate-y-0"
-                leave-to-class="opacity-0 translate-y-3">
-                <div v-if="selected && !showSuccess"
-                    class="sm:hidden fixed bottom-0 inset-x-0 z-40
-                        bg-white/96 dark:bg-[#0d1829]/96 backdrop-blur-xl
-                        border-t border-slate-200 dark:border-white/[0.08]
-                        shadow-[0_-8px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-8px_40px_rgba(0,0,0,0.6)]">
-                    <div class="px-4 py-3 flex items-center gap-3 max-w-lg mx-auto">
-                        <div class="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0"
-                            :style="`background:${platformInfo(selected.category?.name).from}25`">
-                            <PlatformLogo :platform="platformInfo(selected.category?.name).key" class="w-4 h-4"
-                                :style="`color:${platformInfo(selected.category?.name).brand}`" />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-[12.5px] font-bold text-slate-800 dark:text-white truncate leading-tight">{{ selected.name }}</p>
-                            <p class="text-[10.5px] text-slate-400 dark:text-slate-400 mt-0.5">
-                                {{ symbol }}{{ convertAmount(selected.selling_price).toFixed(6) }}&nbsp;/&nbsp;1,000
-                            </p>
-                        </div>
-                        <div class="flex items-center gap-2.5 flex-shrink-0">
-                            <div class="text-right">
-                                <p class="text-[14px] font-black tabular-nums leading-tight"
-                                    style="background: linear-gradient(90deg, #0ea5e9, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text">
-                                    {{ symbol }}{{ convertAmount(orderTotal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 }) }}
-                                </p>
-                                <p class="text-[9.5px] text-slate-400 dark:text-slate-600">total</p>
-                            </div>
-                            <button @click="selected = null; form.service_id = null"
-                                class="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-all active:scale-90">
-                                <X class="w-4 h-4" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </Transition>
-        </Teleport>
 
         <!-- ════════════════════════════════════════════════════════════ -->
         <!-- SUCCESS MODAL (same component as New Order page)            -->

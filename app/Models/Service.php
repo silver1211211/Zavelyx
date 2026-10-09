@@ -54,11 +54,14 @@ class Service extends Model
             ->where('services.is_active', true)
             ->where(function (Builder $q): void {
                 $q->whereNull('services.provider_id')
-                  ->orWhereExists(function ($sub): void {
+                  ->orWhere(function (Builder $providerService): void {
+                      $providerService->where('services.metadata->catalog_approved', true)
+                          ->whereExists(function ($sub): void {
                       $sub->selectRaw('1')
                           ->from('providers')
                           ->whereColumn('providers.id', 'services.provider_id')
                           ->where('providers.is_active', true);
+                          });
                   });
             });
     }

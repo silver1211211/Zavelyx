@@ -67,7 +67,10 @@ class OrderController extends Controller
                 ->where('s.type', 'smm')
                 ->where(function ($q): void {
                     $q->whereNull('s.provider_id')
-                      ->orWhere('p.is_active', true);
+                      ->orWhere(function ($providerService): void {
+                          $providerService->whereRaw("JSON_EXTRACT(s.metadata, '$.catalog_approved') = true")
+                              ->where('p.is_active', true);
+                      });
                 })
                 ->select('c.id', 'c.name', 'c.slug', DB::raw('COUNT(s.id) as count'))
                 ->groupBy('c.id', 'c.name', 'c.slug')
@@ -210,7 +213,6 @@ class OrderController extends Controller
                 }
 
                 return $query
-                    ->limit(750)
                     ->get(['id', 'category_id', 'name', 'selling_price', 'min_amount', 'max_amount', 'metadata'])
                     ->map(fn ($s) => [
                         'id'            => $s->id,
@@ -255,7 +257,8 @@ class OrderController extends Controller
 
         $service = Service::with(['provider', 'category'])->findOrFail($validated['service_id']);
 
-        if (!$service->is_active || ($service->provider_id && !$service->provider?->is_active)) {
+        if (! $service->is_active
+            || ($service->provider_id && (! $service->provider?->is_active || ! data_get($service->metadata, 'catalog_approved', false)))) {
             return back()->withErrors(['service_id' => 'This service is currently unavailable.']);
         }
 
