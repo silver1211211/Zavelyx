@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { coinAsset, networkAsset } from '@/utils/cryptoAssets';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Clock, History, Loader2, Plus, Wallet } from 'lucide-vue-next';
 
@@ -28,12 +29,8 @@ const styles = {
     refunded: ['Refunded', 'bg-violet-50 text-violet-600 border-violet-200', ArrowLeft],
 };
 const status = value => styles[value] ?? styles.waiting;
-const LOCAL_COIN_ICONS = { USDT: '/images/crypto/usdt.svg', BNB: '/images/crypto/bnb.svg' };
-const iconUrl = coin => {
-    const symbol = coin?.split('_')[0]?.toUpperCase();
-    return LOCAL_COIN_ICONS[symbol] ?? (symbol ? `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/${symbol.toLowerCase()}.svg` : '');
-};
-const networkIconUrl = network => /bnb|bep20|binance smart chain/i.test(network ?? '') ? LOCAL_COIN_ICONS.BNB : '';
+const iconUrl = coinAsset;
+const networkIconUrl = networkAsset;
 const date = value => new Date(value).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 function setFilter(value) {
     router.get(route('deposit.history'), value === 'all' ? {} : { status: value }, { preserveState: true, preserveScroll: true, replace: true });
@@ -80,7 +77,7 @@ function setFilter(value) {
                             <img v-if="deposit.pay_currency" :src="iconUrl(deposit.pay_currency)" :alt="deposit.pay_currency" class="w-full h-full object-contain" />
                             <Wallet v-else class="w-full h-full text-sky-500" />
                             <img v-if="networkIconUrl(deposit.network)"
-                                :src="networkIconUrl(deposit.network)" alt="BNB Smart Chain"
+                                :src="networkIconUrl(deposit.network)" :alt="`${deposit.network} network`"
                                 class="absolute -right-1 -bottom-1 w-5 h-5 rounded-full bg-white dark:bg-[#101d30] p-0.5 border-2 border-white dark:border-[#101d30] shadow-md" />
                         </div>
                         <div class="flex-1 min-w-0">

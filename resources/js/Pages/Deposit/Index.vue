@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { coinAsset, networkAsset } from '@/utils/cryptoAssets';
 import { fetchTimeout } from '@/utils/fetchTimeout';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import {
@@ -397,12 +398,10 @@ const COIN_COLORS = {
     MATIC: '#8247E5', DAI: '#F5AC37',
 };
 function coinIconUrl(value) {
-    const sym = value.split('_')[0].toUpperCase();
-    const local = { USDT: '/images/crypto/usdt.svg', BNB: '/images/crypto/bnb.svg' };
-    return local[sym] ?? `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/${sym.toLowerCase()}.svg`;
+    return coinAsset(value);
 }
 function networkIconUrl(network) {
-    return /bnb|bep20|binance smart chain/i.test(network?.network ?? network?.value ?? '') ? '/images/crypto/bnb.svg' : '';
+    return networkAsset(network);
 }
 function coinBgColor(value) {
     const sym = value.split('_')[0];
@@ -733,7 +732,7 @@ onUnmounted(() => {
                                             {{ network.payCurrency.slice(0, 4) }}
                                         </div>
                                         <img v-if="networkIconUrl(network)"
-                                            :src="networkIconUrl(network)" alt="BNB Smart Chain"
+                                            :src="networkIconUrl(network)" :alt="`${network.network} network`"
                                             class="absolute -right-1 -bottom-1 w-4 h-4 rounded-full bg-white dark:bg-[#101d30] p-px border border-white dark:border-[#101d30] shadow" />
                                     </div>
 

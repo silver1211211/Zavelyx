@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { coinAsset, networkAsset } from '@/utils/cryptoAssets';
 import { fetchTimeout } from '@/utils/fetchTimeout';
 import { Head, Link } from '@inertiajs/vue3';
 import {
@@ -36,17 +37,8 @@ const hasMemo    = computed(() => !!current.value?.memo);
 
 // Coin icon helpers
 const coinSymbol = computed(() => (current.value?.pay_currency ?? '').split('_')[0].toLowerCase());
-const coinIconUrl = computed(() =>
-    coinSymbol.value
-        ? ({ usdt: '/images/crypto/usdt.svg', bnb: '/images/crypto/bnb.svg' }[coinSymbol.value]
-            ?? `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/${coinSymbol.value}.svg`)
-        : ''
-);
-const networkIconUrl = computed(() =>
-    /bnb|bep20|binance smart chain/i.test(current.value?.network ?? current.value?.pay_currency ?? '')
-        ? '/images/crypto/bnb.svg'
-        : ''
-);
+const coinIconUrl = computed(() => coinAsset(current.value?.pay_currency));
+const networkIconUrl = computed(() => networkAsset(current.value?.network ?? current.value?.pay_currency));
 const COIN_COLORS = {
     btc: '#F7931A', eth: '#627EEA', usdt: '#26A17B', usdc: '#2775CA',
     bnb: '#F3BA2F', sol: '#9945FF', xrp: '#00AAE4',
@@ -270,7 +262,7 @@ function fmtUsd(v)    { return Number(v || 0).toFixed(2); }
                                 :style="`background: ${coinColor}`">
                                 {{ (current.pay_currency ?? '??').split('_')[0].slice(0, 4) }}
                             </div>
-                            <img v-if="networkIconUrl" :src="networkIconUrl" alt="BNB Smart Chain"
+                            <img v-if="networkIconUrl" :src="networkIconUrl" :alt="`${current.network} network`"
                                 class="absolute -right-1 -bottom-1 w-6 h-6 rounded-full bg-white dark:bg-[#101d30] p-0.5 border-2 border-white dark:border-[#101d30] shadow-md" />
                         </div>
                         <!-- Amount -->
