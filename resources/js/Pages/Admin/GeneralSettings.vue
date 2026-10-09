@@ -72,7 +72,7 @@ const configuredBranding = ref(Object.fromEntries(
 ));
 const officialBranding = Object.fromEntries(LOGO_SLOTS.map(s => [
     s.type,
-    s.type === 'favicon' ? '/branding/zavelyx-symbol.png?v=20261009' : '/branding/zavelyx-logo-light.png?v=20261009',
+    s.type === 'favicon' ? '/branding/zavelyx-symbol.png?v=20261009' : '/branding/zavelyx-logo-light.png?v=20261009-2',
 ]));
 const brandingPreviews = ref(Object.fromEntries(
     LOGO_SLOTS.map(s => [s.type, configuredBranding.value[s.type] || officialBranding[s.type]])

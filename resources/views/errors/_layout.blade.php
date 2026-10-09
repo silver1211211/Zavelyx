@@ -274,7 +274,7 @@
     <!-- Nav -->
     <nav>
         <a href="/" class="brand">
-            <img src="/branding/zavelyx-logo-dark.png?v=20261009" alt="Zavelyx">
+            <img src="/branding/zavelyx-logo-dark.png?v=20261009-2" alt="Zavelyx">
         </a>
         <div class="nav-links">
             <a href="javascript:history.back()" class="nav-link">← Back</a>

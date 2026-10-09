@@ -12,8 +12,8 @@ defineProps({
         <img v-if="customUrl && !iconOnly" :src="customUrl" :alt="alt" class="block h-full w-auto max-w-full object-contain" />
         <img v-else-if="iconOnly" src="/branding/zavelyx-symbol.png?v=20261009" :alt="alt" class="block h-full w-full object-contain" />
         <template v-else>
-            <img src="/branding/zavelyx-logo-light.png?v=20261009" :alt="alt" class="block h-full w-auto max-w-full object-contain dark:hidden" />
-            <img src="/branding/zavelyx-logo-dark.png?v=20261009" :alt="alt" class="hidden h-full w-auto max-w-full object-contain dark:block" />
+            <img src="/branding/zavelyx-logo-light.png?v=20261009-2" :alt="alt" class="block h-full w-auto max-w-full object-contain dark:hidden" />
+            <img src="/branding/zavelyx-logo-dark.png?v=20261009-2" :alt="alt" class="hidden h-full w-auto max-w-full object-contain dark:block" />
         </template>
     </span>
 </template>
