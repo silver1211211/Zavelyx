@@ -37,8 +37,8 @@ Schedule::command('numbers:sync --limit=200')
 
 // Import/update services from all active providers every 6 hours
 Schedule::command('providers:sync')
-    ->everySixHours()
-    ->withoutOverlapping(30)
+    ->dailyAt('02:15')
+    ->withoutOverlapping(120)
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/providers-sync.log'));
 

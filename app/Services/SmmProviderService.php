@@ -322,6 +322,20 @@ class SmmProviderService
             $sellingPrice = $this->applyMarkup($costPrice, $markupType, $markupValue);
             $platform     = $this->inferPlatform($name, $categoryName);
             $isActive     = $this->providerServiceIsActive($item);
+            $providerDescription = trim((string) ($item['description'] ?? $item['desc'] ?? $item['details'] ?? $item['info'] ?? ''));
+            $providerMetadata = [
+                'provider_description' => $providerDescription ?: null,
+                'start_time' => $item['start_time'] ?? $item['start'] ?? null,
+                'delivery_rate' => $item['speed'] ?? $item['delivery_rate'] ?? null,
+                'refill_duration' => $item['refill_duration'] ?? $item['refill_days'] ?? null,
+                'restrictions' => $item['restrictions'] ?? $item['requirements'] ?? null,
+                'dripfeed' => $this->truthy($item['dripfeed'] ?? false),
+                'refill' => $this->truthy($item['refill'] ?? false),
+                'cancel' => $this->truthy($item['cancel'] ?? false),
+                'platform' => $platform,
+                'provider_status' => $item['status'] ?? null,
+                'documentation_status' => $providerDescription !== '' ? 'provider_verified' : 'review_required',
+            ];
 
             if (!array_key_exists($categoryName, $categoryCache)) {
                 $baseSlug = Str::slug($categoryName) ?: ('category-' . Str::random(6));
@@ -353,13 +367,8 @@ class SmmProviderService
                 'selling_price'         => $sellingPrice,
                 'min_amount'            => (float) ($item['min'] ?? 1),
                 'max_amount'            => (float) ($item['max'] ?? 1000000),
-                'metadata'              => [
-                    'refill'          => $this->truthy($item['refill'] ?? false),
-                    'cancel'          => $this->truthy($item['cancel'] ?? false),
-                    'platform'        => $platform,
-                    'provider_status' => $item['status'] ?? null,
-                ],
-                'is_active'             => $isActive,
+                'metadata'              => $providerMetadata,
+                'is_active'             => $isActive && $providerDescription !== '',
             ];
 
             $matches = Service::where('provider_id', $provider->id)
@@ -370,6 +379,14 @@ class SmmProviderService
             $existing = $matches->first();
 
             if ($existing) {
+                $existingMetadata = $existing->metadata ?? [];
+                $manualDescription = trim((string) ($existingMetadata['description'] ?? ''));
+                $payload['metadata'] = array_merge($existingMetadata, $providerMetadata, [
+                    'description' => $manualDescription !== '' ? $manualDescription : $providerDescription,
+                    'description_source' => $manualDescription !== '' ? 'admin' : ($providerDescription !== '' ? 'provider' : null),
+                    'documentation_status' => ($manualDescription !== '' || $providerDescription !== '') ? 'documented' : 'review_required',
+                ]);
+                unset($payload['is_active']);
                 $existing->update($payload);
                 $matches->skip(1)->each(function (Service $duplicate): void {
                     if ($duplicate->orders()->exists()) {
@@ -420,6 +437,44 @@ class SmmProviderService
         $this->clearUserServiceCaches();
 
         return $updated;
+    }
+
+    public function syncPrices(Provider $provider): array
+    {
+        $remote = collect($this->fetchServices($provider))
+            ->keyBy(fn (array $item) => (string) ($item['service'] ?? $item['id'] ?? $item['service_id'] ?? ''));
+        $summary = ['updated' => 0, 'unchanged' => 0, 'missing' => 0, 'failed' => 0];
+        $markupType = $provider->markup_type ?? 'percentage';
+        $markupValue = (float) ($provider->markup_value ?? 0);
+
+        $provider->services()->where('is_active', true)->whereNotNull('provider_service_code')
+            ->chunkById(500, function ($services) use ($remote, $markupType, $markupValue, &$summary): void {
+                foreach ($services as $service) {
+                    try {
+                        $item = $remote->get((string) $service->provider_service_code);
+                        if (!$item || !isset($item['rate']) || !is_numeric($item['rate'])) {
+                            $summary['missing']++;
+                            continue;
+                        }
+                        $cost = (float) $item['rate'];
+                        $selling = $this->applyMarkup($cost, $markupType, $markupValue);
+                        if (bccomp((string) $service->cost_price, (string) $cost, 8) === 0
+                            && bccomp((string) $service->selling_price, (string) $selling, 8) === 0) {
+                            $summary['unchanged']++;
+                            continue;
+                        }
+                        $service->update(['cost_price' => $cost, 'selling_price' => $selling]);
+                        $summary['updated']++;
+                    } catch (\Throwable $e) {
+                        $summary['failed']++;
+                        Log::warning('SMM price sync failed for service', ['service_id' => $service->id, 'error' => $e->getMessage()]);
+                    }
+                }
+            });
+
+        $provider->update(['last_synced_at' => now()]);
+        $this->clearUserServiceCaches();
+        return $summary;
     }
 
     public function clearUserServiceCaches(): void

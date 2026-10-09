@@ -31,7 +31,6 @@ class SyncProviders extends Command
 
         $this->info("Syncing {$providers->count()} provider(s)…");
 
-        $totalImported = 0;
         $totalUpdated  = 0;
         $failed        = 0;
 
@@ -45,18 +44,17 @@ class SyncProviders extends Command
                     continue;
                 }
 
-                $result = $smm->importServices($provider);
-                $totalImported += $result['imported'];
+                $result = $smm->syncPrices($provider);
                 $totalUpdated  += $result['updated'];
 
-                $this->line("    ✓ {$result['imported']} imported, {$result['updated']} updated ({$result['total']} total)");
+                $this->line("    updated={$result['updated']} unchanged={$result['unchanged']} missing={$result['missing']} failed={$result['failed']}");
             } catch (\Throwable $e) {
                 $this->error("    ✗ {$provider->name}: {$e->getMessage()}");
                 $failed++;
             }
         }
 
-        $this->info("providers:sync complete — imported:{$totalImported}, updated:{$totalUpdated}, failed:{$failed}");
+        $this->info("providers:sync complete — updated:{$totalUpdated}, failed:{$failed}");
 
         return $failed > 0 ? self::FAILURE : self::SUCCESS;
     }

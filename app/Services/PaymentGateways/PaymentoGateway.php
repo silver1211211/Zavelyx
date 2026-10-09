@@ -139,7 +139,7 @@ class PaymentoGateway implements GatewayContract
     {
         if (empty($this->secretKey)) {
             Log::warning('[Paymento IPN] No secret key configured — skipping signature check');
-            return true;
+            return false;
         }
 
         if (empty($signature)) {

@@ -75,7 +75,9 @@ class ProcessDepositJob implements ShouldQueue
         $invoice->increment('retry_count');
 
         // ── Verify payment with gateway API (double-check webhook) ────────────
-        $this->verifyWithGateway($invoice);
+        if (!$this->verifyWithGateway($invoice)) {
+            return;
+        }
 
         // ── Look up gateway fee ───────────────────────────────────────────────
         $gatewayModel = PaymentGateway::where('driver', $invoice->gateway)->first();
@@ -193,7 +195,7 @@ class ProcessDepositJob implements ShouldQueue
      * This is a double-check on top of the webhook to prevent fraud.
      * Throws RuntimeException to trigger job retry on transient errors.
      */
-    private function verifyWithGateway(PaymentInvoice $invoice): void
+    private function verifyWithGateway(PaymentInvoice $invoice): bool
     {
         $paymentId = $invoice->gateway_payment_id ?: $invoice->gateway_invoice_id;
 
@@ -201,7 +203,7 @@ class ProcessDepositJob implements ShouldQueue
             DepositLog::record($invoice->id, 'gateway_verify_skipped',
                 'No payment ID available — skipping API verification (webhook-only mode)',
             );
-            return;
+            throw new \RuntimeException('Payment has no gateway payment ID; credit blocked');
         }
 
         $gatewayModel = PaymentGateway::where('driver', $invoice->gateway)
@@ -212,11 +214,14 @@ class ProcessDepositJob implements ShouldQueue
             DepositLog::record($invoice->id, 'gateway_verify_skipped',
                 "Gateway [{$invoice->gateway}] not found — proceeding without API verification",
             );
-            return;
+            throw new \RuntimeException("Active gateway [{$invoice->gateway}] not found; credit blocked");
         }
 
         try {
             $driver = GatewayManager::make($gatewayModel);
+            if (!$driver->isConfigured()) {
+                throw new \RuntimeException("Gateway [{$invoice->gateway}] verification credentials are missing");
+            }
             $result = $driver->getPaymentStatus($paymentId);
 
             $verifiedStatus = $result['status'] ?? 'unknown';
@@ -242,7 +247,17 @@ class ProcessDepositJob implements ShouldQueue
             }
 
             if ($verifiedStatus === 'finished') {
-                return; // All good — proceed to credit
+                $remoteReference = (string) ($apiData['order_id'] ?? $apiData['orderId'] ?? $apiData['OrderId'] ?? '');
+                if ($remoteReference !== '' && !hash_equals((string) $invoice->reference, $remoteReference)) {
+                    throw new \RuntimeException('Gateway payment reference does not match this invoice');
+                }
+
+                $remoteTrackId = (string) ($apiData['track_id'] ?? $apiData['trackId'] ?? $apiData['PaymentId'] ?? '');
+                if ($remoteTrackId !== '' && !hash_equals((string) $paymentId, $remoteTrackId)) {
+                    throw new \RuntimeException('Gateway payment ID does not match this invoice');
+                }
+
+                return true;
             }
 
             // Terminal state from gateway API — stop retrying
@@ -251,8 +266,7 @@ class ProcessDepositJob implements ShouldQueue
                 DepositLog::record($invoice->id, 'gateway_verify_terminal',
                     "Gateway API says terminal: {$verifiedStatus} — aborting credit",
                 );
-                $this->delete(); // Remove from queue permanently
-                return;
+                return false;
             }
 
             // Still pending/confirming — retry after backoff
@@ -263,14 +277,15 @@ class ProcessDepositJob implements ShouldQueue
         } catch (\RuntimeException $e) {
             throw $e; // Let the queue retry mechanism handle it
         } catch (\Throwable $e) {
-            // Unexpected error during verification — log but don't block crediting
-            Log::error('[ProcessDepositJob] Verification error — proceeding without verification', [
+            // Fail closed: an unexpected verification error must never authorize credit.
+            Log::error('[ProcessDepositJob] Verification error — credit blocked', [
                 'invoice' => $invoice->reference,
                 'error'   => $e->getMessage(),
             ]);
             DepositLog::record($invoice->id, 'gateway_verify_error',
-                'Verification exception — proceeding: ' . $e->getMessage(),
+                'Verification exception; credit blocked: ' . $e->getMessage(),
             );
+            throw new \RuntimeException('Gateway verification failed; credit blocked', 0, $e);
         }
     }
 

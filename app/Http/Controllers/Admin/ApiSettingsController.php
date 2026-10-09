@@ -32,7 +32,6 @@ class ApiSettingsController extends Controller
                 'priority' => $p->priority,
                 'markup_type' => $p->markup_type ?? 'percentage',
                 'markup_value' => (float) ($p->markup_value ?? 0),
-                'balance' => $p->balance,
                 'last_synced_at' => $p->last_synced_at?->toISOString(),
                 'services_count' => $p->services_count,
                 // Never expose credentials/API key to frontend
@@ -145,9 +144,13 @@ class ApiSettingsController extends Controller
 
     public function recalculateMarkup(Provider $provider): RedirectResponse
     {
-        $count = $this->smm->recalculateMarkup($provider);
+        try {
+            $result = $this->smm->syncPrices($provider);
+        } catch (\Throwable $e) {
+            return back()->withErrors(['reprice' => 'Reprice failed: '.$e->getMessage()]);
+        }
 
-        return back()->with('success', "Markup recalculated — {$count} service prices updated.");
+        return back()->with('success', "Reprice complete: {$result['updated']} updated, {$result['unchanged']} unchanged, {$result['missing']} missing, {$result['failed']} failed.");
     }
 
     public function testConnection(Provider $provider): \Illuminate\Http\JsonResponse

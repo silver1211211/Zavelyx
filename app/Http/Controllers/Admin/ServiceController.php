@@ -127,7 +127,11 @@ class ServiceController extends Controller
             'cost_price'    => $data['cost_price'] ?? $service->cost_price,
             'min_amount'    => $data['min_amount'] ?? $service->min_amount,
             'max_amount'    => $data['max_amount'] ?? $service->max_amount,
-            'metadata'      => array_merge($service->metadata ?? [], ['description' => $data['description'] ?? '']),
+            'metadata'      => array_merge($service->metadata ?? [], [
+                'description' => $data['description'] ?? '',
+                'description_source' => 'admin',
+                'documentation_status' => filled($data['description'] ?? null) ? 'documented' : 'review_required',
+            ]),
             'is_active'     => $data['is_active'] ?? $service->is_active,
         ]);
         $this->smm->clearUserServiceCaches();

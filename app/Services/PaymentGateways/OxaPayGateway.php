@@ -121,7 +121,7 @@ class OxaPayGateway implements GatewayContract
     {
         if (empty($this->apiKey)) {
             Log::warning('[OxaPay] No API key configured — skipping signature check');
-            return true;
+            return false;
         }
 
         if (empty($signature)) {
