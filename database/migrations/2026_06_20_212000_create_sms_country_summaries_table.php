@@ -22,8 +22,8 @@ return new class extends Migration
                 sms_country,
                 COALESCE(NULLIF(MAX(sms_country_name), ''), sms_country) as name,
                 SUM(sms_available_count) as qty,
-                NOW(),
-                NOW()
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
             FROM services
             WHERE type = 'sms'
               AND is_active = 1

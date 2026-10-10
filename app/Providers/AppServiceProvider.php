@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\DatabaseSafety;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -24,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        DatabaseSafety::enforce($this->app, $_SERVER['argv'] ?? []);
+
         DB::listen(function (QueryExecuted $query): void {
             if ($query->time < 750) {
                 return;

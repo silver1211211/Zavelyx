@@ -32,23 +32,30 @@ class OrderController extends Controller
             ->with('service:id,name')
             ->latest()
             ->paginate(20)
-            ->through(fn($o) => [
-                'id'                => $o->id,
-                'reference'         => $o->reference,
-                'service'           => ['name' => $o->service?->name],
-                'link'              => $o->link,
-                'quantity'          => (int) ($o->quantity ?? 0),
-                'amount'            => (float) $o->amount,
-                'status'            => $o->status,
-                'start_count'       => (int) ($o->start_count ?? 0),
-                'remains'           => (int) ($o->remains ?? 0),
-                'refund_status'     => $o->refund_status,
-                'refund_amount'     => $o->refund_amount !== null ? (float) $o->refund_amount : null,
-                'refunded_at'       => $o->refunded_at?->toISOString(),
-                'last_synced_at'    => $o->last_synced_at?->toISOString(),
-                'processed_at'      => $o->processed_at?->toISOString(),
-                'created_at'        => $o->created_at->toISOString(),
-            ]);
+            ->through(function ($o) {
+                $providerResponse = $o->provider_response ?? [];
+
+                return [
+                    'id' => $o->id,
+                    'reference' => $o->reference,
+                    'service' => ['name' => $o->service?->name],
+                    'link' => $o->link,
+                    'quantity' => (int) ($o->quantity ?? 0),
+                    'amount' => (float) $o->amount,
+                    'status' => $o->status,
+                    'start_count' => (int) ($o->start_count ?? 0),
+                    'remains' => $o->remains !== null ? (int) $o->remains : null,
+                    'remains_confirmed' => array_key_exists('remains_explicit', $providerResponse)
+                        ? (bool) $providerResponse['remains_explicit']
+                        : (in_array($o->status, ['completed', 'partial', 'canceled', 'failed'], true) && $o->remains !== null),
+                    'refund_status' => $o->refund_status,
+                    'refund_amount' => $o->refund_amount !== null ? (float) $o->refund_amount : null,
+                    'refunded_at' => $o->refunded_at?->toISOString(),
+                    'last_synced_at' => $o->last_synced_at?->toISOString(),
+                    'processed_at' => $o->processed_at?->toISOString(),
+                    'created_at' => $o->created_at->toISOString(),
+                ];
+            });
 
         return Inertia::render('Orders/Index', [
             'orders' => $orders,
@@ -59,29 +66,28 @@ class OrderController extends Controller
     {
         // Lightweight: only category metadata for building platform cards.
         // Services are fetched lazily via loadServices() on demand.
-        $categories = Cache::remember('order.categories.v'.$this->serviceCacheVersion(), 600, fn () =>
-            DB::table('services as s')
-                ->join('categories as c', 's.category_id', '=', 'c.id')
-                ->leftJoin('providers as p', 's.provider_id', '=', 'p.id')
-                ->where('s.is_active', true)
-                ->where('s.type', 'smm')
-                ->where(function ($q): void {
-                    $q->whereNull('s.provider_id')
-                      ->orWhere(function ($providerService): void {
-                          $providerService->whereRaw("JSON_EXTRACT(s.metadata, '$.catalog_approved') = true")
-                              ->where('p.is_active', true);
-                      });
-                })
-                ->select('c.id', 'c.name', 'c.slug', DB::raw('COUNT(s.id) as count'))
-                ->groupBy('c.id', 'c.name', 'c.slug')
-                ->orderByDesc('count')
-                ->get()
-                ->map(fn ($c) => [
-                    'id'    => $c->id,
-                    'name'  => $c->name,
-                    'slug'  => $c->slug,
-                    'count' => (int) $c->count,
-                ])
+        $categories = Cache::remember('order.categories.v'.$this->serviceCacheVersion(), 600, fn () => DB::table('services as s')
+            ->join('categories as c', 's.category_id', '=', 'c.id')
+            ->leftJoin('providers as p', 's.provider_id', '=', 'p.id')
+            ->where('s.is_active', true)
+            ->where('s.type', 'smm')
+            ->where(function ($q): void {
+                $q->whereNull('s.provider_id')
+                    ->orWhere(function ($providerService): void {
+                        $providerService->whereRaw("JSON_EXTRACT(s.metadata, '$.catalog_approved') = true")
+                            ->where('p.is_active', true);
+                    });
+            })
+            ->select('c.id', 'c.name', 'c.slug', DB::raw('COUNT(s.id) as count'))
+            ->groupBy('c.id', 'c.name', 'c.slug')
+            ->orderByDesc('count')
+            ->get()
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'slug' => $c->slug,
+                'count' => (int) $c->count,
+            ])
         );
 
         return Inertia::render('Orders/Create', [
@@ -103,7 +109,7 @@ class OrderController extends Controller
 
             $totals = array_fill_keys(self::PLATFORM_KEYS, 0);
             foreach ($rows as $row) {
-                $haystack = strtolower((string) $row->category_name . ' ' . (string) $row->service_name);
+                $haystack = strtolower((string) $row->category_name.' '.(string) $row->service_name);
                 $normalized = preg_replace('/[^a-z0-9]+/', '', $haystack);
                 $matched = false;
                 foreach (self::PLATFORM_KEYS as $key) {
@@ -173,9 +179,8 @@ class OrderController extends Controller
                             $terms = $key === 'rednote' ? ['red note', 'xiaohongshu', 'rednote'] : [$key];
                             foreach ($terms as $term) {
                                 $q->whereRaw('LOWER(services.name) NOT LIKE ?', ["%{$term}%"])
-                                  ->whereDoesntHave('category', fn (Builder $cat) =>
-                                      $cat->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
-                                  );
+                                    ->whereDoesntHave('category', fn (Builder $cat) => $cat->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
+                                    );
                             }
                         }
                     });
@@ -184,9 +189,8 @@ class OrderController extends Controller
                     $query->where(function (Builder $q) use ($terms): void {
                         foreach ($terms as $term) {
                             $q->orWhereRaw('LOWER(services.name) LIKE ?', ["%{$term}%"])
-                              ->orWhereHas('category', fn (Builder $cat) =>
-                                  $cat->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
-                              );
+                                ->orWhereHas('category', fn (Builder $cat) => $cat->whereRaw('LOWER(name) LIKE ?', ["%{$term}%"])
+                                );
                         }
                     });
                 }
@@ -218,16 +222,16 @@ class OrderController extends Controller
                         }
 
                         return [
-                            'id'            => $s->id,
-                            'name'          => html_entity_decode((string) $s->name, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
-                            'category_id'   => $s->category_id,
-                            'category'      => $s->category
+                            'id' => $s->id,
+                            'name' => html_entity_decode((string) $s->name, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                            'category_id' => $s->category_id,
+                            'category' => $s->category
                                 ? ['id' => $s->category->id, 'name' => html_entity_decode((string) $s->category->name, ENT_QUOTES | ENT_HTML5, 'UTF-8')]
                                 : null,
                             'selling_price' => (float) $s->selling_price,
-                            'min_amount'    => (int) ($s->min_amount ?? 1),
-                            'max_amount'    => (int) ($s->max_amount ?? 1_000_000),
-                            'metadata'      => $metadata,
+                            'min_amount' => (int) ($s->min_amount ?? 1),
+                            'max_amount' => (int) ($s->max_amount ?? 1_000_000),
+                            'metadata' => $metadata,
                         ];
                     })
                     ->values();
@@ -246,16 +250,16 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'service_id' => ['required', 'exists:services,id'],
-            'link'       => ['required', 'string', 'max:500'],
-            'quantity'   => ['required', 'integer', 'min:1'],
+            'link' => ['required', 'string', 'max:500'],
+            'quantity' => ['required', 'integer', 'min:1'],
         ]);
 
         // Normalize URL — auto-prepend https:// if scheme is missing
         $link = trim($validated['link']);
-        if (!preg_match('/^https?:\/\//i', $link)) {
-            $link = 'https://' . $link;
+        if (! preg_match('/^https?:\/\//i', $link)) {
+            $link = 'https://'.$link;
         }
-        if (!filter_var($link, FILTER_VALIDATE_URL)) {
+        if (! filter_var($link, FILTER_VALIDATE_URL)) {
             return back()->withErrors(['link' => 'Please enter a valid URL (e.g. https://instagram.com/p/...).']);
         }
 
@@ -282,7 +286,7 @@ class OrderController extends Controller
 
         $wallet = $request->user()->wallet;
 
-        if (!$wallet || !$wallet->is_active) {
+        if (! $wallet || ! $wallet->is_active) {
             return back()->withErrors(['balance' => 'Your account is currently frozen. Contact support.']);
         }
 
@@ -292,40 +296,40 @@ class OrderController extends Controller
 
         $order = null;
 
-        DB::transaction(function () use ($request, $service, $validated, $link, $amount, $wallet, $quantity, &$order) {
+        DB::transaction(function () use ($request, $service, $link, $amount, $wallet, $quantity, &$order) {
             $balanceBefore = (float) $wallet->balance;
 
             $wallet->decrement('balance', $amount);
             $wallet->refresh();
 
             $order = Order::create([
-                'reference'   => Str::uuid(),
-                'user_id'     => $request->user()->id,
-                'service_id'  => $service->id,
+                'reference' => Str::uuid(),
+                'user_id' => $request->user()->id,
+                'service_id' => $service->id,
                 'provider_id' => $service->provider_id,
-                'amount'      => $amount,
-                'status'      => 'pending',
-                'quantity'    => $quantity,
-                'link'        => $link,
-                'payload'     => [
-                    'link'        => $link,
-                    'quantity'    => $quantity,
+                'amount' => $amount,
+                'status' => 'pending',
+                'quantity' => $quantity,
+                'link' => $link,
+                'payload' => [
+                    'link' => $link,
+                    'quantity' => $quantity,
                     'rate_per_1k' => (float) $service->selling_price,
                     'cost_per_1k' => (float) ($service->cost_price ?? 0),
                 ],
             ]);
 
             Transaction::create([
-                'reference'      => Str::uuid(),
-                'user_id'        => $request->user()->id,
-                'wallet_id'      => $wallet->id,
-                'order_id'       => $order->id,
-                'type'           => 'debit',
-                'amount'         => $amount,
+                'reference' => Str::uuid(),
+                'user_id' => $request->user()->id,
+                'wallet_id' => $wallet->id,
+                'order_id' => $order->id,
+                'type' => 'debit',
+                'amount' => $amount,
                 'balance_before' => $balanceBefore,
-                'balance_after'  => (float) $wallet->balance,
-                'status'         => 'completed',
-                'description'    => "Order #{$order->id}: {$service->name}",
+                'balance_after' => (float) $wallet->balance,
+                'status' => 'completed',
+                'description' => "Order #{$order->id}: {$service->name}",
             ]);
         });
 
@@ -338,14 +342,14 @@ class OrderController extends Controller
             $wallet->refresh();
 
             Inertia::flash('order_placed', [
-                'order_id'          => $order->id,
-                'service_name'      => $service->name,
-                'category_name'     => $service->category?->name ?? '',
-                'quantity'          => $quantity,
-                'amount'            => $amount,
+                'order_id' => $order->id,
+                'service_name' => $service->name,
+                'category_name' => $service->category?->name ?? '',
+                'quantity' => $quantity,
+                'amount' => $amount,
                 'remaining_balance' => (float) $wallet->balance,
-                'status'            => $order->status,
-                'link'              => $link,
+                'status' => $order->status,
+                'link' => $link,
             ]);
 
             return redirect()->route('orders.create');

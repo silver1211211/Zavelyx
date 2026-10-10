@@ -149,6 +149,9 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
 // Protected admin routes
 Route::prefix('admin')->name('admin.')->middleware(['admin.auth', 'admin.ip'])->group(function (): void {
 
+    Route::get('/credentials/change', [AdminAuthController::class, 'showCredentialChange'])->name('credentials.edit');
+    Route::post('/credentials/change', [AdminAuthController::class, 'changeCredentials'])->name('credentials.update');
+
     Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
 
     // ── User management ──────────────────────────────────────────────────────

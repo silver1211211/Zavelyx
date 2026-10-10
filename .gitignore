@@ -3,6 +3,7 @@
 .env
 .env.*
 !.env.example
+!.env.testing.example
 .env.backup
 .env.production
 .db-password

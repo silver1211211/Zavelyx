@@ -5,6 +5,8 @@ use Pdo\Mysql;
 
 return [
 
+    'test_database_isolated' => env('ZAVELYX_TEST_DATABASE_ISOLATED', false),
+
     /*
     |--------------------------------------------------------------------------
     | Default Database Connection Name

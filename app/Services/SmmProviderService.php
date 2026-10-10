@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Category;
 use App\Models\Order;
 use App\Models\Provider;
 use App\Models\Service;
-use App\Models\Category;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -27,7 +27,7 @@ class SmmProviderService
 
     public function testConnection(Provider $provider): array
     {
-        $creds  = $provider->credentials ?? [];
+        $creds = $provider->credentials ?? [];
         $apiKey = $creds['api_key'] ?? '';
 
         if (empty($apiKey) || empty($provider->base_url)) {
@@ -36,7 +36,7 @@ class SmmProviderService
 
         try {
             $response = Http::retry(2, 300)->timeout(15)->asForm()->post($this->endpoint($provider), [
-                'key'    => $apiKey,
+                'key' => $apiKey,
                 'action' => 'balance',
             ]);
 
@@ -47,13 +47,13 @@ class SmmProviderService
                     return [
                         'success' => true,
                         'message' => 'Connected successfully.',
-                        'balance' => $data['balance'] . ' ' . ($data['currency'] ?? ''),
+                        'balance' => $data['balance'].' '.($data['currency'] ?? ''),
                     ];
                 }
 
                 if (isset($data['error'])) {
                     $svcResponse = Http::retry(2, 300)->timeout(15)->asForm()->post($this->endpoint($provider), [
-                        'key'    => $apiKey,
+                        'key' => $apiKey,
                         'action' => 'services',
                     ]);
 
@@ -61,13 +61,13 @@ class SmmProviderService
                         return ['success' => true, 'message' => 'Connected (services endpoint verified).'];
                     }
 
-                    return ['success' => false, 'message' => 'API error: ' . $data['error']];
+                    return ['success' => false, 'message' => 'API error: '.$data['error']];
                 }
             }
 
-            return ['success' => false, 'message' => 'HTTP ' . $response->status() . ' from provider.'];
+            return ['success' => false, 'message' => 'HTTP '.$response->status().' from provider.'];
         } catch (Throwable $e) {
-            return ['success' => false, 'message' => 'Connection failed: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'Connection failed: '.$e->getMessage()];
         }
     }
 
@@ -75,21 +75,21 @@ class SmmProviderService
 
     public function placeOrder(Order $order): array
     {
-        $service  = $order->service;
+        $service = $order->service;
         $provider = $service?->provider;
 
-        if (!$provider || !$provider->is_active) {
+        if (! $provider || ! $provider->is_active) {
             return ['success' => false, 'message' => 'Provider not available.'];
         }
 
-        $creds  = $provider->credentials ?? [];
+        $creds = $provider->credentials ?? [];
         $apiKey = $creds['api_key'] ?? '';
 
         if (empty($apiKey) || empty($provider->base_url)) {
             return ['success' => false, 'message' => 'Provider credentials missing.'];
         }
 
-        $link     = $order->link ?? ($order->payload['link'] ?? '');
+        $link = $order->link ?? ($order->payload['link'] ?? '');
         $quantity = $order->quantity ?? ($order->payload['quantity'] ?? 1);
 
         if (empty($link)) {
@@ -98,34 +98,35 @@ class SmmProviderService
 
         try {
             $response = Http::retry(2, 500)->timeout(15)->asForm()->post($this->endpoint($provider), [
-                'key'     => $apiKey,
-                'action'  => 'add',
+                'key' => $apiKey,
+                'action' => 'add',
                 'service' => $service->provider_service_code,
-                'link'    => $link,
-                'quantity'=> $quantity,
+                'link' => $link,
+                'quantity' => $quantity,
             ]);
 
             $data = $response->json();
 
-            if (!$response->successful() || !is_array($data)) {
-                return ['success' => false, 'message' => 'HTTP ' . $response->status() . ' from provider.'];
+            if (! $response->successful() || ! is_array($data)) {
+                return ['success' => false, 'message' => 'HTTP '.$response->status().' from provider.'];
             }
 
             if (isset($data['error'])) {
-                return ['success' => false, 'message' => 'Provider error: ' . $data['error']];
+                return ['success' => false, 'message' => 'Provider error: '.$data['error']];
             }
 
             if (isset($data['order'])) {
                 return [
-                    'success'          => true,
-                    'provider_order_id'=> (string) $data['order'],
+                    'success' => true,
+                    'provider_order_id' => (string) $data['order'],
                 ];
             }
 
             return ['success' => false, 'message' => 'Unexpected provider response.'];
         } catch (Throwable $e) {
             Log::error('SMM placeOrder failed', ['order' => $order->id, 'error' => $e->getMessage()]);
-            return ['success' => false, 'message' => 'Request failed: ' . $e->getMessage()];
+
+            return ['success' => false, 'message' => 'Request failed: '.$e->getMessage()];
         }
     }
 
@@ -133,72 +134,84 @@ class SmmProviderService
 
     public function checkOrderStatus(Provider $provider, string $providerOrderId): array
     {
-        $creds  = $provider->credentials ?? [];
+        $creds = $provider->credentials ?? [];
         $apiKey = $creds['api_key'] ?? '';
 
         Log::channel('orders')->debug('API request: single order status', [
-            'provider'       => $provider->name,
+            'provider' => $provider->name,
             'provider_order' => $providerOrderId,
-            'url'            => $provider->base_url,
+            'url' => $provider->base_url,
         ]);
 
         try {
             $response = Http::retry(2, 500)->timeout(15)->asForm()->post($this->endpoint($provider), [
-                'key'    => $apiKey,
+                'key' => $apiKey,
                 'action' => 'status',
-                'order'  => $providerOrderId,
+                'order' => $providerOrderId,
             ]);
 
             $data = $response->json();
 
             Log::channel('orders')->debug('API response: single order status', [
-                'provider'       => $provider->name,
+                'provider' => $provider->name,
                 'provider_order' => $providerOrderId,
-                'http_status'    => $response->status(),
-                'response'       => $data,
+                'http_status' => $response->status(),
+                'response' => $data,
             ]);
 
-            if (!$response->successful() || !is_array($data)) {
+            if (! $response->successful() || ! is_array($data)) {
                 Log::channel('orders')->warning('API error: bad HTTP response', [
-                    'provider'    => $provider->name,
+                    'provider' => $provider->name,
                     'http_status' => $response->status(),
                 ]);
-                return ['success' => false, 'message' => 'HTTP ' . $response->status()];
+
+                return ['success' => false, 'message' => 'HTTP '.$response->status()];
             }
 
             if (isset($data['error'])) {
                 Log::channel('orders')->warning('API error: provider returned error', [
                     'provider' => $provider->name,
-                    'error'    => $data['error'],
+                    'error' => $data['error'],
                 ]);
+
                 return ['success' => false, 'message' => $data['error']];
             }
 
-            $rawStatus = $data['status'] ?? 'Pending';
+            $parsed = $this->parseStatusPayload($data, $providerOrderId);
+
+            if (! $parsed['success']) {
+                Log::channel('orders')->warning('API error: malformed order status payload', [
+                    'provider' => $provider->name,
+                    'provider_order' => $providerOrderId,
+                    'message' => $parsed['message'],
+                ]);
+
+                return $parsed;
+            }
+
+            $rawStatus = $parsed['status'];
 
             Log::channel('orders')->info('Sync success: single order', [
-                'provider'       => $provider->name,
+                'provider' => $provider->name,
                 'provider_order' => $providerOrderId,
-                'raw_status'     => $rawStatus,
-                'normalized'     => $this->normalizeStatus($rawStatus),
-                'start_count'    => $data['start_count'] ?? 0,
-                'remains'        => $data['remains'] ?? 0,
+                'raw_status' => $rawStatus,
+                'normalized' => $this->normalizeStatus($rawStatus),
+                'start_count' => $parsed['start_count'],
+                'remains' => $parsed['remains'],
+                'remains_explicit' => $parsed['remains_explicit'],
             ]);
 
-            return [
-                'success'     => true,
-                'status'      => $rawStatus,
-                'start_count' => (int) ($data['start_count'] ?? 0),
-                'remains'     => (int) ($data['remains'] ?? 0),
-                'currency'    => $data['currency'] ?? 'USD',
-                'raw'         => $data,
-            ];
+            return array_merge($parsed, [
+                'currency' => $data['currency'] ?? 'USD',
+                'raw' => $data,
+            ]);
         } catch (Throwable $e) {
             Log::channel('orders')->error('API exception: single order status', [
-                'provider'       => $provider->name,
+                'provider' => $provider->name,
                 'provider_order' => $providerOrderId,
-                'error'          => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
+
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
@@ -210,19 +223,19 @@ class SmmProviderService
 
     public function checkMultipleOrdersLogged(Provider $provider, array $providerOrderIds): array
     {
-        $creds  = $provider->credentials ?? [];
+        $creds = $provider->credentials ?? [];
         $apiKey = $creds['api_key'] ?? '';
 
         Log::channel('orders')->debug('API request: batch order status', [
-            'provider'   => $provider->name,
-            'url'        => $provider->base_url,
-            'order_ids'  => $providerOrderIds,
-            'count'      => count($providerOrderIds),
+            'provider' => $provider->name,
+            'url' => $provider->base_url,
+            'order_ids' => $providerOrderIds,
+            'count' => count($providerOrderIds),
         ]);
 
         try {
             $response = Http::retry(2, 500)->timeout(15)->asForm()->post($this->endpoint($provider), [
-                'key'    => $apiKey,
+                'key' => $apiKey,
                 'action' => 'status',
                 'orders' => implode(',', $providerOrderIds),
             ]);
@@ -230,39 +243,137 @@ class SmmProviderService
             $data = $response->json();
 
             Log::channel('orders')->debug('API response: batch order status', [
-                'provider'    => $provider->name,
+                'provider' => $provider->name,
                 'http_status' => $response->status(),
                 'result_count' => is_array($data) ? count($data) : 0,
             ]);
 
-            if (!$response->successful() || !is_array($data)) {
+            if (! $response->successful() || ! is_array($data)) {
                 Log::channel('orders')->warning('Batch API error: bad response', [
-                    'provider'    => $provider->name,
+                    'provider' => $provider->name,
                     'http_status' => $response->status(),
                 ]);
+
+                return [];
+            }
+
+            if (isset($data['error'])) {
+                Log::channel('orders')->warning('Batch API error: provider returned error', [
+                    'provider' => $provider->name,
+                    'error' => $data['error'],
+                ]);
+
                 return [];
             }
 
             Log::channel('orders')->info('Sync success: batch status', [
-                'provider'    => $provider->name,
-                'count'       => count($data),
+                'provider' => $provider->name,
+                'count' => count($data),
             ]);
 
             return $data;
         } catch (Throwable $e) {
             Log::channel('orders')->error('API exception: batch order status', [
                 'provider' => $provider->name,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
+
             return [];
         }
+    }
+
+    /**
+     * Validate a standard SMM status response without manufacturing progress.
+     * Standard SMM APIs define `remains` as the units still owed on the order.
+     */
+    public function parseStatusPayload(array $data, ?string $expectedProviderOrderId = null): array
+    {
+        if (isset($data['error'])) {
+            return ['success' => false, 'message' => (string) $data['error']];
+        }
+
+        $status = $data['status'] ?? null;
+        if (! is_string($status) || trim($status) === '') {
+            return ['success' => false, 'message' => 'Provider response is missing a valid status.'];
+        }
+
+        if ($expectedProviderOrderId !== null) {
+            $responseOrderId = $data['order'] ?? $data['order_id'] ?? $data['id'] ?? null;
+            if ($responseOrderId !== null && (string) $responseOrderId !== (string) $expectedProviderOrderId) {
+                return ['success' => false, 'message' => 'Provider response belongs to a different order.'];
+            }
+        }
+
+        $remains = $this->nonNegativeInteger($data['remains'] ?? null);
+        $startCount = $this->nonNegativeInteger($data['start_count'] ?? null);
+
+        return [
+            'success' => true,
+            'status' => trim($status),
+            'start_count' => $startCount,
+            'start_count_explicit' => $startCount !== null,
+            'remains' => $remains,
+            'remains_explicit' => $remains !== null,
+        ];
+    }
+
+    /**
+     * Resolve verified provider evidence into a local state. Local terminal
+     * states are immutable, preventing stale responses from reopening orders.
+     */
+    public function resolveSyncedOrderStatus(
+        string $currentStatus,
+        string $providerStatus,
+        ?int $remains,
+        bool $remainsExplicit,
+        int $quantity,
+    ): array {
+        if (in_array($currentStatus, ['completed', 'failed', 'canceled', 'partial'], true)) {
+            return [
+                'status' => $currentStatus,
+                'auto_completed' => false,
+                'reason' => 'local_terminal_status_is_immutable',
+            ];
+        }
+
+        $normalized = $this->normalizeStatus($providerStatus);
+
+        if ($normalized === 'processing'
+            && $quantity > 0
+            && $remainsExplicit
+            && $remains === 0) {
+            return [
+                'status' => 'completed',
+                'auto_completed' => true,
+                'reason' => 'provider_processing_with_explicit_zero_remaining',
+            ];
+        }
+
+        return ['status' => $normalized, 'auto_completed' => false, 'reason' => null];
+    }
+
+    private function nonNegativeInteger(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value >= 0 ? $value : null;
+        }
+
+        if (is_string($value) && preg_match('/^\d+$/', trim($value)) === 1) {
+            return (int) trim($value);
+        }
+
+        if (is_float($value) && is_finite($value) && $value >= 0 && floor($value) === $value) {
+            return (int) $value;
+        }
+
+        return null;
     }
 
     // ── Service sync ──────────────────────────────────────────────────────────
 
     public function fetchServices(Provider $provider): array
     {
-        $creds  = $provider->credentials ?? [];
+        $creds = $provider->credentials ?? [];
         $apiKey = $creds['api_key'] ?? '';
 
         if (empty($apiKey) || empty($provider->base_url)) {
@@ -270,22 +381,22 @@ class SmmProviderService
         }
 
         $response = Http::retry(2, 750)->timeout(15)->asForm()->post($this->endpoint($provider), [
-            'key'    => $apiKey,
+            'key' => $apiKey,
             'action' => 'services',
         ]);
 
-        if (!$response->successful()) {
-            throw new \RuntimeException('HTTP ' . $response->status() . ' from provider.');
+        if (! $response->successful()) {
+            throw new \RuntimeException('HTTP '.$response->status().' from provider.');
         }
 
         $data = $response->json();
 
-        if (!is_array($data)) {
+        if (! is_array($data)) {
             throw new \RuntimeException('Invalid response from provider.');
         }
 
         if (isset($data['error'])) {
-            throw new \RuntimeException('API error: ' . $data['error']);
+            throw new \RuntimeException('API error: '.$data['error']);
         }
 
         return $this->normalizeServicesResponse($data);
@@ -295,33 +406,33 @@ class SmmProviderService
     {
         $raw = $this->fetchServices($provider);
 
-        $markupType  = $provider->markup_type ?? 'percentage';
+        $markupType = $provider->markup_type ?? 'percentage';
         $markupValue = (float) ($provider->markup_value ?? 0);
 
-        $imported      = 0;
-        $updated       = 0;
-        $deactivated   = 0;
+        $imported = 0;
+        $updated = 0;
+        $deactivated = 0;
         $categoryCache = [];
-        $seenCodes     = [];
+        $seenCodes = [];
 
         foreach ($raw as $item) {
-            if (!is_array($item)) {
+            if (! is_array($item)) {
                 continue;
             }
 
-            $serviceId    = $item['service'] ?? $item['id'] ?? $item['service_id'] ?? null;
-            $name         = trim((string) ($item['name'] ?? ''));
+            $serviceId = $item['service'] ?? $item['id'] ?? $item['service_id'] ?? null;
+            $name = trim((string) ($item['name'] ?? ''));
             $categoryName = trim((string) ($item['category'] ?? '')) ?: 'Uncategorized';
 
-            if (!$serviceId || !$name) {
+            if (! $serviceId || ! $name) {
                 continue;
             }
 
             $seenCodes[] = (string) $serviceId;
-            $costPrice    = (float) ($item['rate'] ?? 0);
+            $costPrice = (float) ($item['rate'] ?? 0);
             $sellingPrice = $this->applyMarkup($costPrice, $markupType, $markupValue);
-            $platform     = $this->inferPlatform($name, $categoryName);
-            $isActive     = $this->providerServiceIsActive($item);
+            $platform = $this->inferPlatform($name, $categoryName);
+            $isActive = $this->providerServiceIsActive($item);
             $providerDescription = trim((string) ($item['description'] ?? $item['desc'] ?? $item['details'] ?? $item['info'] ?? ''));
             $providerMetadata = [
                 'provider_description' => $providerDescription ?: null,
@@ -337,14 +448,14 @@ class SmmProviderService
                 'documentation_status' => $providerDescription !== '' ? 'provider_verified' : 'review_required',
             ];
 
-            if (!array_key_exists($categoryName, $categoryCache)) {
-                $baseSlug = Str::slug($categoryName) ?: ('category-' . Str::random(6));
-                $slug     = $baseSlug;
-                $suffix   = 2;
-                while (\App\Models\Category::where('slug', $slug)
-                                           ->where('name', '!=', $categoryName)
-                                           ->exists()) {
-                    $slug = $baseSlug . '-' . $suffix++;
+            if (! array_key_exists($categoryName, $categoryCache)) {
+                $baseSlug = Str::slug($categoryName) ?: ('category-'.Str::random(6));
+                $slug = $baseSlug;
+                $suffix = 2;
+                while (Category::where('slug', $slug)
+                    ->where('name', '!=', $categoryName)
+                    ->exists()) {
+                    $slug = $baseSlug.'-'.$suffix++;
                 }
 
                 $categoryCache[$categoryName] = Category::firstOrCreate(
@@ -354,7 +465,7 @@ class SmmProviderService
             }
 
             $categoryModel = $categoryCache[$categoryName];
-            $serviceSlug   = Str::slug($name) . '-' . $provider->id . '-' . $serviceId;
+            $serviceSlug = Str::slug($name).'-'.$provider->id.'-'.$serviceId;
             $suppliedDescription = $providerDescription !== ''
                 ? $this->sanitizeCustomerDescription($providerDescription)
                 : $this->buildSuppliedDescription(
@@ -369,18 +480,18 @@ class SmmProviderService
             $providerMetadata['documentation_status'] = 'supplied_details_only';
 
             $payload = [
-                'name'                  => $name,
-                'slug'                  => $serviceSlug,
-                'category_id'           => $categoryModel->id,
-                'provider_id'           => $provider->id,
+                'name' => $name,
+                'slug' => $serviceSlug,
+                'category_id' => $categoryModel->id,
+                'provider_id' => $provider->id,
                 'provider_service_code' => (string) $serviceId,
-                'type'                  => 'smm',
-                'cost_price'            => $costPrice,
-                'selling_price'         => $sellingPrice,
-                'min_amount'            => (float) ($item['min'] ?? 1),
-                'max_amount'            => (float) ($item['max'] ?? 1000000),
-                'metadata'              => $providerMetadata,
-                'is_active'             => $isActive && $providerDescription !== '',
+                'type' => 'smm',
+                'cost_price' => $costPrice,
+                'selling_price' => $sellingPrice,
+                'min_amount' => (float) ($item['min'] ?? 1),
+                'max_amount' => (float) ($item['max'] ?? 1000000),
+                'metadata' => $providerMetadata,
+                'is_active' => $isActive && $providerDescription !== '',
             ];
 
             $matches = Service::where('provider_id', $provider->id)
@@ -437,9 +548,9 @@ class SmmProviderService
 
     public function recalculateMarkup(Provider $provider): int
     {
-        $markupType  = $provider->markup_type ?? 'percentage';
+        $markupType = $provider->markup_type ?? 'percentage';
         $markupValue = (float) ($provider->markup_value ?? 0);
-        $updated     = 0;
+        $updated = 0;
 
         $provider->services()->whereNotNull('cost_price')->chunkById(500, function ($chunk) use ($markupType, $markupValue, &$updated) {
             foreach ($chunk as $service) {
@@ -470,8 +581,9 @@ class SmmProviderService
                 foreach ($services as $service) {
                     try {
                         $item = $remote->get((string) $service->provider_service_code);
-                        if (!$item || !isset($item['rate']) || !is_numeric($item['rate'])) {
+                        if (! $item || ! isset($item['rate']) || ! is_numeric($item['rate'])) {
                             $summary['missing']++;
+
                             continue;
                         }
                         $cost = (float) $item['rate'];
@@ -479,11 +591,12 @@ class SmmProviderService
                         if (bccomp((string) $service->cost_price, (string) $cost, 8) === 0
                             && bccomp((string) $service->selling_price, (string) $selling, 8) === 0) {
                             $summary['unchanged']++;
+
                             continue;
                         }
                         $service->update(['cost_price' => $cost, 'selling_price' => $selling]);
                         $summary['updated']++;
-                    } catch (\Throwable $e) {
+                    } catch (Throwable $e) {
                         $summary['failed']++;
                         Log::warning('SMM price sync failed for service', ['service_id' => $service->id, 'error' => $e->getMessage()]);
                     }
@@ -492,6 +605,7 @@ class SmmProviderService
 
         $provider->update(['last_synced_at' => now()]);
         $this->clearUserServiceCaches();
+
         return $summary;
     }
 
@@ -499,6 +613,7 @@ class SmmProviderService
     {
         $metadata = $service->metadata ?? [];
         $service->loadMissing('category:id,name');
+
         return $this->buildSuppliedDescription(
             (string) $service->name,
             (string) ($service->category?->name ?: 'Uncategorized'),
@@ -517,6 +632,7 @@ class SmmProviderService
             $line = preg_replace('/\bprovider(?:\s+service)?\b/iu', '', $line) ?? $line;
             $line = preg_replace('/\s*\|\s*\|\s*/u', ' | ', $line) ?? $line;
             $line = preg_replace('/\s{2,}/u', ' ', $line) ?? $line;
+
             return trim($line, " \t\n\r\0\x0B|");
         }, $lines);
 
@@ -525,12 +641,12 @@ class SmmProviderService
 
     private function buildSuppliedDescription(string $name, string $category, float $minimum, float $maximum, array $metadata): string
     {
-        $sentence = static fn (string $value): string => rtrim(trim($value), '.') . '.';
+        $sentence = static fn (string $value): string => rtrim(trim($value), '.').'.';
         $safeName = $this->sanitizeCustomerDescription($name);
         $safeCategory = $this->sanitizeCustomerDescription($category);
         $lines = [$sentence($safeName)];
         if ($safeCategory !== '') {
-            $lines[] = $sentence('Category: ' . $safeCategory);
+            $lines[] = $sentence('Category: '.$safeCategory);
         }
         $lines[] = sprintf(
             'Order quantity: %s to %s units.',
@@ -539,24 +655,24 @@ class SmmProviderService
         );
 
         if (filled($metadata['start_time'] ?? null)) {
-            $lines[] = $sentence('Start time: ' . $metadata['start_time']);
+            $lines[] = $sentence('Start time: '.$metadata['start_time']);
         }
         if (filled($metadata['delivery_rate'] ?? null)) {
-            $lines[] = $sentence('Delivery speed: ' . $metadata['delivery_rate']);
+            $lines[] = $sentence('Delivery speed: '.$metadata['delivery_rate']);
         }
         if (filled($metadata['refill_duration'] ?? null)) {
-            $lines[] = $sentence('Refill: ' . $metadata['refill_duration']);
-        } elseif (!empty($metadata['refill'])) {
+            $lines[] = $sentence('Refill: '.$metadata['refill_duration']);
+        } elseif (! empty($metadata['refill'])) {
             $lines[] = 'Refill: available.';
         }
-        if (!empty($metadata['cancel'])) {
+        if (! empty($metadata['cancel'])) {
             $lines[] = 'Cancellation: available.';
         }
-        if (!empty($metadata['dripfeed'])) {
+        if (! empty($metadata['dripfeed'])) {
             $lines[] = 'Drip-feed: available.';
         }
         if (filled($metadata['restrictions'] ?? null)) {
-            $lines[] = $sentence('Requirements: ' . $metadata['restrictions']);
+            $lines[] = $sentence('Requirements: '.$metadata['restrictions']);
         }
 
         return $this->sanitizeCustomerDescription(implode("\n", $lines));
@@ -586,7 +702,7 @@ class SmmProviderService
     private function normalizeServicesResponse(array $data): array
     {
         if (isset($data['error'])) {
-            throw new \RuntimeException('API error: ' . $data['error']);
+            throw new \RuntimeException('API error: '.$data['error']);
         }
 
         foreach (['services', 'data', 'result'] as $key) {
@@ -596,7 +712,7 @@ class SmmProviderService
             }
         }
 
-        if (!array_is_list($data)) {
+        if (! array_is_list($data)) {
             $data = array_values($data);
         }
 
@@ -605,13 +721,13 @@ class SmmProviderService
 
     private function providerServiceIsActive(array $item): bool
     {
-        if (!array_key_exists('status', $item)) {
+        if (! array_key_exists('status', $item)) {
             return true;
         }
 
         $status = strtolower(trim((string) $item['status']));
 
-        return !in_array($status, ['0', 'false', 'inactive', 'disabled', 'off', 'unavailable'], true);
+        return ! in_array($status, ['0', 'false', 'inactive', 'disabled', 'off', 'unavailable'], true);
     }
 
     private function truthy(mixed $value): bool
@@ -627,7 +743,7 @@ class SmmProviderService
 
     private function inferPlatform(string $name, string $category): ?string
     {
-        $haystack = strtolower($category . ' ' . $name);
+        $haystack = strtolower($category.' '.$name);
 
         foreach (self::PLATFORM_KEYS as $key) {
             $normalized = preg_replace('/[^a-z0-9]+/', '', $haystack);
