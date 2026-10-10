@@ -10,23 +10,23 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('services', function (Blueprint $table): void {
-            if (!Schema::hasColumn('services', 'sms_country')) {
+            if (! Schema::hasColumn('services', 'sms_country')) {
                 $table->string('sms_country', 100)->nullable()->after('metadata');
             }
 
-            if (!Schema::hasColumn('services', 'sms_country_name')) {
+            if (! Schema::hasColumn('services', 'sms_country_name')) {
                 $table->string('sms_country_name', 150)->nullable()->after('sms_country');
             }
 
-            if (!Schema::hasColumn('services', 'sms_operator')) {
+            if (! Schema::hasColumn('services', 'sms_operator')) {
                 $table->string('sms_operator', 100)->nullable()->after('sms_country_name');
             }
 
-            if (!Schema::hasColumn('services', 'sms_available_count')) {
+            if (! Schema::hasColumn('services', 'sms_available_count')) {
                 $table->unsignedInteger('sms_available_count')->default(0)->after('sms_operator');
             }
 
-            if (!Schema::hasColumn('services', 'number_provider_driver')) {
+            if (! Schema::hasColumn('services', 'number_provider_driver')) {
                 $table->string('number_provider_driver', 50)->nullable()->after('sms_available_count');
             }
         });
@@ -88,7 +88,7 @@ return new class extends Migration
 
     private function addIndex(string $table, array $columns, string $name): void
     {
-        if (!$this->indexExists($table, $name)) {
+        if (! $this->indexExists($table, $name)) {
             Schema::table($table, fn (Blueprint $blueprint) => $blueprint->index($columns, $name));
         }
     }
@@ -102,12 +102,7 @@ return new class extends Migration
 
     private function indexExists(string $table, string $name): bool
     {
-        $database = DB::getDatabaseName();
-
-        return DB::table('information_schema.statistics')
-            ->where('table_schema', $database)
-            ->where('table_name', $table)
-            ->where('index_name', $name)
-            ->exists();
+        return collect(Schema::getIndexes($table))
+            ->contains(fn (array $index): bool => ($index['name'] ?? null) === $name);
     }
 };

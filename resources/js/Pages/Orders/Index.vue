@@ -96,11 +96,17 @@ const filteredOrders = computed(() => {
 });
 
 // ── Progress helpers ──────────────────────────────────────────────────────────
-const delivered = (o) => Math.max(0, (o.quantity ?? 0) - (o.remains ?? 0));
+const hasConfirmedRemains = (o) => o?.remains_confirmed === true;
+const delivered = (o) => {
+    if (o?.status === 'completed') return o.quantity ?? 0;
+    if (!hasConfirmedRemains(o)) return null;
+    return Math.max(0, (o.quantity ?? 0) - o.remains);
+};
 const progress  = (o) => {
     const qty = o.quantity ?? 0;
-    if (qty <= 0) return 0;
-    return Math.min(100, Math.round((delivered(o) / qty) * 100));
+    const done = delivered(o);
+    if (qty <= 0 || done === null) return null;
+    return Math.min(100, Math.round((done / qty) * 100));
 };
 
 // ── Status change animations ──────────────────────────────────────────────────
@@ -274,7 +280,7 @@ const money = (n) => symbol.value + formatAmount(n ?? 0);
                                         </p>
                                         <p class="text-[11px] text-slate-400 dark:text-slate-600 font-mono mt-px">#{{ o.id }}</p>
                                         <!-- Inline progress for processing orders -->
-                                        <div v-if="o.status === 'processing' && o.quantity > 0" class="mt-1.5 w-36">
+                                        <div v-if="o.status === 'processing' && o.quantity > 0 && hasConfirmedRemains(o)" class="mt-1.5 w-36">
                                             <div class="h-1 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
                                                 <div class="h-full rounded-full transition-all duration-500"
                                                     :class="progress(o) > 0 ? sc(o.status).bar : 'bg-sky-400 animate-pulse'"
@@ -284,6 +290,10 @@ const money = (n) => symbol.value + formatAmount(n ?? 0);
                                                 {{ delivered(o).toLocaleString() }} / {{ o.quantity.toLocaleString() }} delivered
                                             </p>
                                         </div>
+                                        <p v-else-if="o.status === 'processing' && o.quantity > 0"
+                                            class="mt-1.5 text-[9.5px] text-slate-400 dark:text-slate-600">
+                                            Delivery progress unconfirmed
+                                        </p>
                                     </div>
                                 </div>
                             </td>
@@ -377,7 +387,7 @@ const money = (n) => symbol.value + formatAmount(n ?? 0);
                     </div>
 
                     <!-- Progress bar (processing) -->
-                    <div v-if="o.status === 'processing' && o.quantity > 0" class="mt-2.5">
+                    <div v-if="o.status === 'processing' && o.quantity > 0 && hasConfirmedRemains(o)" class="mt-2.5">
                         <div class="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-600 mb-1">
                             <span>{{ delivered(o).toLocaleString() }} delivered</span>
                             <span>{{ o.remains?.toLocaleString() ?? 0 }} remaining</span>
@@ -388,6 +398,10 @@ const money = (n) => symbol.value + formatAmount(n ?? 0);
                                 :style="{ width: Math.max(progress(o), 4) + '%' }" />
                         </div>
                     </div>
+                    <p v-else-if="o.status === 'processing' && o.quantity > 0"
+                        class="mt-2.5 text-[10px] text-slate-400 dark:text-slate-600">
+                        Delivery progress unconfirmed
+                    </p>
 
                     <!-- Refund badge -->
                     <div v-if="o.refund_status === 'completed' && o.refund_amount > 0" class="mt-2">
@@ -499,7 +513,7 @@ const money = (n) => symbol.value + formatAmount(n ?? 0);
                         </div>
 
                         <!-- Progress section (processing/partial) -->
-                        <div v-if="['processing', 'partial'].includes(selected.status) && selected.quantity > 0"
+                        <div v-if="['processing', 'partial'].includes(selected.status) && selected.quantity > 0 && hasConfirmedRemains(selected)"
                             class="mx-5 mb-4 p-4 rounded-xl"
                             :style="{ background: 'var(--panel-section-bg)', border: '1px solid var(--panel-section-border)' }">
                             <div class="flex items-center justify-between mb-2.5">
@@ -530,6 +544,11 @@ const money = (n) => symbol.value + formatAmount(n ?? 0);
                                 </div>
                             </div>
                         </div>
+                        <div v-else-if="selected.status === 'processing' && selected.quantity > 0"
+                            class="mx-5 mb-4 p-4 rounded-xl text-[12px] text-slate-500 dark:text-slate-400"
+                            :style="{ background: 'var(--panel-section-bg)', border: '1px solid var(--panel-section-border)' }">
+                            Delivery progress is awaiting confirmation from the service network.
+                        </div>
 
                         <!-- Completed: delivery summary -->
                         <div v-if="selected.status === 'completed'"
@@ -545,7 +564,7 @@ const money = (n) => symbol.value + formatAmount(n ?? 0);
                         </div>
 
                         <!-- Partial refund section -->
-                        <div v-if="selected.status === 'partial' && selected.refund_status === 'completed'"
+                        <div v-if="selected.status === 'partial' && selected.refund_status === 'completed' && hasConfirmedRemains(selected)"
                             class="mx-5 mb-4 p-4 rounded-xl"
                             style="background: rgba(249,115,22,0.07); border: 1px solid rgba(249,115,22,0.2)">
                             <p class="text-[12px] font-bold text-orange-700 dark:text-orange-300 mb-2">Partial Refund Issued</p>
@@ -563,6 +582,11 @@ const money = (n) => symbol.value + formatAmount(n ?? 0);
                                     <span class="font-black text-emerald-600 dark:text-emerald-400">{{ money(selected.refund_amount) }}</span>
                                 </div>
                             </div>
+                        </div>
+                        <div v-else-if="selected.status === 'partial' && !hasConfirmedRemains(selected)"
+                            class="mx-5 mb-4 p-4 rounded-xl text-[12px] text-orange-700 dark:text-orange-300"
+                            style="background: rgba(249,115,22,0.07); border: 1px solid rgba(249,115,22,0.2)">
+                            Delivery and refund quantities are awaiting a confirmed remaining count.
                         </div>
 
                         <!-- Canceled / Failed refund section -->

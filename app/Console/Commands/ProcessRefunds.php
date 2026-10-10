@@ -19,12 +19,12 @@ class ProcessRefunds extends Command
 
     public function handle(): int
     {
-        $limit  = (int) $this->option('limit');
+        $limit = (int) $this->option('limit');
         $dryRun = (bool) $this->option('dry-run');
 
         $processed = 0;
-        $skipped   = 0;
-        $errors    = 0;
+        $skipped = 0;
+        $errors = 0;
 
         // Find orders that need a refund and haven't been refunded yet
         $orders = Order::whereIn('status', ['canceled', 'partial', 'failed'])
@@ -35,6 +35,7 @@ class ProcessRefunds extends Command
 
         if ($orders->isEmpty()) {
             $this->info('No pending refunds.');
+
             return self::SUCCESS;
         }
 
@@ -44,13 +45,14 @@ class ProcessRefunds extends Command
             try {
                 $wallet = $order->user?->wallet;
 
-                if (!$wallet) {
+                if (! $wallet) {
                     $this->warn("  Order #{$order->id}: user has no wallet — skipping.");
                     // Mark so we don't keep checking
-                    if (!$dryRun) {
+                    if (! $dryRun) {
                         $order->update(['refund_status' => 'skipped']);
                     }
                     $skipped++;
+
                     continue;
                 }
 
@@ -61,10 +63,20 @@ class ProcessRefunds extends Command
 
                 if ($alreadyRefunded) {
                     $this->warn("  Order #{$order->id}: credit transaction already exists — marking complete.");
-                    if (!$dryRun) {
+                    if (! $dryRun) {
                         $order->update(['refund_status' => 'completed']);
                     }
                     $skipped++;
+
+                    continue;
+                }
+
+                $providerResponse = $order->provider_response ?? [];
+                if ($order->status === 'partial'
+                    && ($order->remains === null || ($providerResponse['remains_explicit'] ?? false) !== true)) {
+                    $this->warn("  Order #{$order->id}: partial refund deferred — remaining count is unconfirmed.");
+                    $skipped++;
+
                     continue;
                 }
 
@@ -73,16 +85,17 @@ class ProcessRefunds extends Command
                 if ($refundAmount <= 0) {
                     // Nothing to refund (e.g. partial with 0 remains) — mark complete
                     $this->line("  Order #{$order->id} ({$order->status}): nothing to refund.");
-                    if (!$dryRun) {
+                    if (! $dryRun) {
                         $order->update(['refund_status' => 'completed', 'refund_amount' => 0]);
                     }
                     $skipped++;
+
                     continue;
                 }
 
                 $this->line("  Order #{$order->id} ({$order->status}): refunding \${$refundAmount}");
 
-                if (!$dryRun) {
+                if (! $dryRun) {
                     DB::transaction(function () use ($order, $wallet, $refundAmount) {
                         $balanceBefore = (float) $wallet->balance;
 
@@ -90,30 +103,30 @@ class ProcessRefunds extends Command
                         $wallet->refresh();
 
                         Transaction::create([
-                            'reference'      => Str::uuid(),
-                            'user_id'        => $order->user_id,
-                            'wallet_id'      => $wallet->id,
-                            'order_id'       => $order->id,
-                            'type'           => 'credit',
-                            'amount'         => $refundAmount,
+                            'reference' => Str::uuid(),
+                            'user_id' => $order->user_id,
+                            'wallet_id' => $wallet->id,
+                            'order_id' => $order->id,
+                            'type' => 'credit',
+                            'amount' => $refundAmount,
                             'balance_before' => $balanceBefore,
-                            'balance_after'  => (float) $wallet->balance,
-                            'status'         => 'completed',
-                            'description'    => "Auto-refund: Order #{$order->id} ({$order->status})",
+                            'balance_after' => (float) $wallet->balance,
+                            'status' => 'completed',
+                            'description' => "Auto-refund: Order #{$order->id} ({$order->status})",
                         ]);
 
                         $order->update([
                             'refund_status' => 'completed',
                             'refund_amount' => $refundAmount,
-                            'refunded_at'   => now(),
+                            'refunded_at' => now(),
                         ]);
                     });
 
                     Log::channel('orders')->info('Refund action: auto-refund processed', [
-                        'order_id'      => $order->id,
-                        'status'        => $order->status,
+                        'order_id' => $order->id,
+                        'status' => $order->status,
                         'refund_amount' => $refundAmount,
-                        'user_id'       => $order->user_id,
+                        'user_id' => $order->user_id,
                         'balance_after' => (float) $wallet->fresh()->balance,
                     ]);
                 }
@@ -137,10 +150,10 @@ class ProcessRefunds extends Command
 
     private function calculateRefund(Order $order): float
     {
-        $status   = $order->status;
-        $amount   = (float) $order->amount;
+        $status = $order->status;
+        $amount = (float) $order->amount;
         $quantity = (int) $order->quantity;
-        $remains  = (int) ($order->remains ?? 0);
+        $remains = $order->remains !== null ? (int) $order->remains : null;
 
         // Full refund for canceled or failed orders
         if ($status === 'canceled' || $status === 'failed') {
@@ -149,10 +162,11 @@ class ProcessRefunds extends Command
 
         // Partial refund: refund only the undelivered portion
         if ($status === 'partial') {
-            if ($quantity <= 0 || $remains <= 0) {
+            if ($quantity <= 0 || $remains === null || $remains <= 0) {
                 return 0.0;
             }
             $unitPrice = $amount / $quantity;
+
             return round($unitPrice * $remains, 8);
         }
 
